@@ -1,0 +1,16 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/code
+    docker:
+      - image: circleci/rust
+    steps:
+      - checkout
+      - run:
+          command: cargo check
+      - run:
+          command: cargo test
+      - run:
+          command: cargo build
+      - run:
+          command: cargo build --release
