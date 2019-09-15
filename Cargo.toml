@@ -1,0 +1,20 @@
+[package]
+name = "dataearch_backend"
+version = "0.1.0"
+authors = ["Phosphorus15 <steepout@qq.com>"]
+edition = "2018"
+build = "build.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = "1.0.7"
+actix-session = "0.2.0"
+serde = "1.0.100"
+serde_json = "1.0.40"
+uuid = { version = "0.7", features = ["serde", "v4"] }
+postgres = "0.15.2"
+actix-web-static-files = "0.2.3"
+
+[build-dependencies]
+actix-web-static-files = "0.2.3"
