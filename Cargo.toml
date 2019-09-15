@@ -1,5 +1,5 @@
 [package]
-name = "dataearch_backend"
+name = "dataearth_backend"
 version = "0.1.0"
 authors = ["Phosphorus15 <steepout@qq.com>"]
 edition = "2018"
