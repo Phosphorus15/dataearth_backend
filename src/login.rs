@@ -64,3 +64,4 @@ pub fn user_login(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<LoginI
         }
     }
 }
+

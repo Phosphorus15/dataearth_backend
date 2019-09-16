@@ -21,6 +21,30 @@ pub struct LoginInfo {
     pub user_type: i32,
 }
 
+#[derive(Deserialize, Serialize, Clone)]
+pub struct Position {
+    x:f32,
+    y:f32,
+}
+
+#[derive(Deserialize, Serialize, Clone)]
+pub struct PoliceStation {
+    name:String,
+    position: Position,
+    crew: Vec<String>,
+    drones:i32
+}
+
+#[derive(Deserialize, Serialize, Clone)]
+pub struct OperatorMark {
+    uid:i32,
+    position:Position,
+    height:f32,
+    level:i32,
+    drone:bool,
+    desc:String
+}
+
 impl DatabaseAccess {
     pub fn new(url: &'_ str) -> Self {
         DatabaseAccess {
@@ -39,11 +63,29 @@ impl DatabaseAccess {
                   )", &[]).unwrap();
         self.conn.execute("CREATE TABLE IF NOT EXISTS login_data (
                     id              SERIAL PRIMARY KEY,
-                    token            VARCHAR NOT NULL,
-                    name          VARCHAR NOT NULL,
+                    token           VARCHAR NOT NULL,
+                    name            VARCHAR NOT NULL,
                     type            INT
                   )", &[]).unwrap();
-    }
+        self.conn.execute("CREATE TABLE IF NOT EXISTS police_station_data (
+                    id              SERIAL PRIMARY KEY,
+                    name            VARCHAR NOT NULL,
+                    positionX       FLOAT,
+                    positionY       FLOAT,
+                    crew            VARCHAR[],
+                    drone           INT
+                  )", &[]).unwrap();
+        self.conn.execute("CREATE TABLE IF NOT EXISTS telephone_operator_data (
+                    id              SERIAL PRIMARY KEY,
+                    uid             INT,
+                    positionX       FLOAT,
+                    positionY       FLOAT,
+                    drone           BOOL,
+                    height          FLOAT,
+                    level           INT,
+                    desc            VARCHAR
+                  )", &[]).unwrap();
+}
 
     pub fn add_user(&self, user: User) {
         self.conn.execute(
@@ -71,6 +113,63 @@ impl DatabaseAccess {
     }
 
 }
+
+impl DatabaseAccess {
+    pub fn add_mark(&self, telephone_operator: OperatorMark) {
+        self.conn.execute(
+            "INSERT INTO telephone_operator_data (uid, positionX, positionY, drone, height, level, desc) VALUES ($1, $2, $3, $4, $5, $6, $7) "
+            , &[&telephone_operator.uid, &telephone_operator.position.x, &telephone_operator.position.y,&telephone_operator.drone,
+                &telephone_operator.height, &telephone_operator.level, &telephone_operator.desc]).unwrap();
+    }
+
+    pub fn find_mark(&self) -> Vec<OperatorMark> {
+        let rows = self.conn
+            .query("SELECT * FROM telephone_operator_data",
+                   &[]).unwrap();
+        let marks: Vec<OperatorMark> = rows.iter().map(|row| {
+            OperatorMark {
+                uid: row.get(1),
+                position: Position{
+                    x: row.get(2),
+                    y: row.get(3)
+                },
+                drone: row.get(4),
+                height: row.get(5),
+                level:row.get(6),
+                desc:row.get(7)
+            }
+        }).collect();
+        return marks;
+    }
+
+}
+
+impl DatabaseAccess {
+    pub fn add_police_station(&self, police_station: PoliceStation) {
+        self.conn.execute(
+            "INSERT INTO police_station_data (name, positionX, positionY, crew, drones) VALUES ($1, $2, $3, $4, $5) "
+            , &[&police_station.name, &police_station.position.x, &police_station.position.y, &police_station.crew, &police_station.drones]).unwrap();
+    }
+
+    pub fn find_police_station(&self) -> Vec<PoliceStation> {
+        let rows = self.conn
+            .query("SELECT * FROM police_station_data",
+                   &[]).unwrap();
+        let police_station: Vec<PoliceStation> = rows.iter().map(|row| {
+            PoliceStation {
+                name: row.get(1),
+                position: Position{
+                    x: row.get(2),
+                    y: row.get(3)
+                },
+                crew: row.get(4),
+                drones: row.get(5)
+            }
+        }).collect();
+        return police_station;
+    }
+}
+
 
 impl DatabaseAccess {
     pub fn add_login(&self, user: LoginInfo) {
@@ -105,3 +204,4 @@ impl Default for DatabaseAccess {
         Self::new("postgres://postgres:12345@localhost:5432")
     }
 }
+

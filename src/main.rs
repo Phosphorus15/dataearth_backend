@@ -24,7 +24,7 @@ fn main_page(database: Data<Arc<Mutex<DatabaseAccess>>>, request: HttpRequest) -
 fn main() {
     let database = database::DatabaseAccess::default();
     database.init();
-    let wrapped_db = Data::new(Arc::new(Mutex::new(database)));
+    /*let wrapped_db = Data::new(Arc::new(Mutex::new(database)));
     HttpServer::new(move || {
         let generated = generate();
         App::new()
@@ -36,7 +36,9 @@ fn main() {
             .route("/user/login", post().to(login::user_login))
             .route("/", get().to(main_page))
             .route("/user/delete", post().to(user::delete_user))
+            .route("/user/logout",post().to(user::logout))
     })
         .bind("127.0.0.1:80").unwrap()
-        .run().unwrap();
+        .run().unwrap();*/
+
 }
