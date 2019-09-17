@@ -25,10 +25,12 @@ pub struct LoginInfo {
 pub struct Position {
     x:f32,
     y:f32,
+    z:f32
 }
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct PoliceStation {
+    id:String,
     name:String,
     position: Position,
     crew: Vec<String>,
@@ -69,9 +71,11 @@ impl DatabaseAccess {
                   )", &[]).unwrap();
         self.conn.execute("CREATE TABLE IF NOT EXISTS police_station_data (
                     id              SERIAL PRIMARY KEY,
+                    uid             VARCHAR NOT NULL,
                     name            VARCHAR NOT NULL,
                     positionX       FLOAT,
                     positionY       FLOAT,
+                    positionZ       FLOAT,
                     crew            VARCHAR[],
                     drone           INT
                   )", &[]).unwrap();
@@ -80,6 +84,7 @@ impl DatabaseAccess {
                     uid             INT,
                     positionX       FLOAT,
                     positionY       FLOAT,
+                    positionZ       FLOAT,
                     drone           BOOL,
                     height          FLOAT,
                     level           INT,
@@ -117,8 +122,8 @@ impl DatabaseAccess {
 impl DatabaseAccess {
     pub fn add_mark(&self, telephone_operator: OperatorMark) {
         self.conn.execute(
-            "INSERT INTO telephone_operator_data (uid, positionX, positionY, drone, height, level, desc) VALUES ($1, $2, $3, $4, $5, $6, $7) "
-            , &[&telephone_operator.uid, &telephone_operator.position.x, &telephone_operator.position.y,&telephone_operator.drone,
+            "INSERT INTO telephone_operator_data (uid, positionX, positionY, positionZ, drone, height, level, desc) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) "
+            , &[&telephone_operator.uid, &telephone_operator.position.x, &telephone_operator.position.y, &telephone_operator.position.z, &telephone_operator.drone,
                 &telephone_operator.height, &telephone_operator.level, &telephone_operator.desc]).unwrap();
     }
 
@@ -131,15 +136,21 @@ impl DatabaseAccess {
                 uid: row.get(1),
                 position: Position{
                     x: row.get(2),
-                    y: row.get(3)
+                    y: row.get(3),
+                    z: row.get(4)
                 },
-                drone: row.get(4),
-                height: row.get(5),
-                level:row.get(6),
-                desc:row.get(7)
+                drone: row.get(5),
+                height: row.get(6),
+                level:row.get(7),
+                desc:row.get(8)
             }
         }).collect();
         return marks;
+    }
+
+    pub fn delete_mark(&self, uid: i32) -> bool {
+        self.conn.execute("DELETE FROM telephone_operator_data WHERE uid=$1"
+                          , &[&uid]).is_ok()
     }
 
 }
@@ -147,8 +158,8 @@ impl DatabaseAccess {
 impl DatabaseAccess {
     pub fn add_police_station(&self, police_station: PoliceStation) {
         self.conn.execute(
-            "INSERT INTO police_station_data (name, positionX, positionY, crew, drones) VALUES ($1, $2, $3, $4, $5) "
-            , &[&police_station.name, &police_station.position.x, &police_station.position.y, &police_station.crew, &police_station.drones]).unwrap();
+            "INSERT INTO police_station_data (uid, name, positionX, positionY, positionZ, crew, drones) VALUES ($1, $2, $3, $4, $5, $6, $7) "
+            , &[&police_station.id, &police_station.name, &police_station.position.x, &police_station.position.y, &police_station.position.z,&police_station.crew, &police_station.drones]).unwrap();
     }
 
     pub fn find_police_station(&self) -> Vec<PoliceStation> {
@@ -157,16 +168,24 @@ impl DatabaseAccess {
                    &[]).unwrap();
         let police_station: Vec<PoliceStation> = rows.iter().map(|row| {
             PoliceStation {
-                name: row.get(1),
+                id:row.get(1),
+                name: row.get(2),
                 position: Position{
-                    x: row.get(2),
-                    y: row.get(3)
+                    x: row.get(3),
+                    y: row.get(4),
+                    z: row.get(5)
+
                 },
-                crew: row.get(4),
-                drones: row.get(5)
+                crew: row.get(6),
+                drones: row.get(7)
             }
         }).collect();
         return police_station;
+    }
+
+    pub fn delete_police_station(&self, id: String) -> bool {
+        self.conn.execute("DELETE FROM police_station_data WHERE uid=$1"
+                          , &[&id]).is_ok()
     }
 }
 

@@ -5,11 +5,11 @@ use serde::Deserialize;
 use actix_web::{HttpRequest, Responder, HttpResponse, HttpMessage};
 
 #[derive(Deserialize)]
-pub struct DeleteInfo {
+pub struct DeleteUserInfo {
     username: String
 }
 
-pub fn delete_user(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<DeleteInfo>, request: HttpRequest) -> impl Responder {
+pub fn delete_user(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<DeleteUserInfo>, request: HttpRequest) -> impl Responder {
     let info = crate::login::get_login(database.clone(), request);
     if let Some(i) = info {
         if i.user_type == 1 {
@@ -20,7 +20,7 @@ pub fn delete_user(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<Delet
     HttpResponse::Ok().body("{result: \"failed\"}")
 }
 
-pub fn logout(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<DeleteInfo>, request: HttpRequest) -> impl Responder {
+pub fn logout(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<DeleteUserInfo>, request: HttpRequest) -> impl Responder {
     let cookie = request.cookie("sess");
     match cookie {
         None => {
