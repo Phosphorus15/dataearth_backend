@@ -15,6 +15,7 @@ serde_json = "1.0.40"
 uuid = { version = "0.7", features = ["serde", "v4"] }
 postgres = "0.15.2"
 actix-web-static-files = "0.2.3"
+priority-queue = "0.6.0"
 
 [build-dependencies]
 actix-web-static-files = "0.2.3"

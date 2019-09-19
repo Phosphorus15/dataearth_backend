@@ -4,6 +4,7 @@ use actix_web::web::*;
 mod database;
 mod login;
 mod user;
+mod dispatch;
 
 use actix_web_static_files;
 
