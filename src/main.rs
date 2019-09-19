@@ -37,7 +37,9 @@ fn main() {
             .route("/user/login", post().to(login::user_login))
             .route("/", get().to(main_page))
             .route("/user/delete", post().to(user::delete_user))
+            .route("/user/logout",post().to(user::logout))
     })
         .bind("127.0.0.1:80").unwrap()
         .run().unwrap();
+
 }
