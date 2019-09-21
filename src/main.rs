@@ -8,13 +8,17 @@ mod dispatch;
 mod police_station;
 mod operator_mark;
 mod init;
+mod dispatcher;
 
 use actix_web_static_files;
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use crate::database::{User, DatabaseAccess};
+use crate::database::DatabaseAccess;
 use sha2::{Sha256, Digest};
+use crate::dispatcher::DispatcherService;
+use actix::{System, SyncArbiter};
+use crate::dispatch::{Dispatcher, parse_road_data, construct_topology, offline_bellman_ford};
 
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 
@@ -41,16 +45,26 @@ pub fn fast_sha256(data: &str) -> String {
 }
 
 fn main() {
+    let sys = actix::System::new("actix-server");
     let database = database::DatabaseAccess::new(
         //include_str!("../database.auth")
         "postgres://postgres:12345@localhost:5432"
     );
     database.init();
     database.try_init();
-    let wrapped_db = Data::new(Arc::new(Mutex::new(database)));
+    let roadmap = parse_road_data(&include_str!("../graph_test.geojson").to_string()).unwrap();
+    let graph = construct_topology(&roadmap);
+    let optimized = offline_bellman_ford(&graph);
+    let dispatcher = Dispatcher::new(graph, optimized);
+    let arc = Arc::new(Mutex::new(database));
+    let service_arc = arc.clone();
+    let service = SyncArbiter::start(1, move || DispatcherService::new(service_arc.clone(), dispatcher.clone()));
+
+    let wrapped_db = Data::new(arc.clone());
     HttpServer::new(move || {
         let generated = generate();
         App::new()
+            .register_data(Data::new(service.clone()))
             .register_data(wrapped_db.clone())
             .service(actix_web_static_files::ResourceFiles::new(
                 "/static",
@@ -68,9 +82,12 @@ fn main() {
             .route("/data/init", post().to(init::init_token))
             .route("/data/request", post().to(init::request_unified_data))
             .route("/data/get_mark", post().to(operator_mark::list_mark))
+            .route("/mark/delete", post().to(operator_mark::delete_mark))
             .route("/data/get_ps", post().to(police_station::list_police_station))
+            .route("/ps/delete", post().to(police_station::delete_police_station))
             .route("/data/mark/ping", post().to(operator_mark::update_mark))
     })
         .bind("127.0.0.1:80").unwrap()
-        .run().unwrap();
+        .start();
+    sys.run();
 }

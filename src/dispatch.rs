@@ -1,5 +1,4 @@
 use std::sync::{Arc, Mutex};
-use std::borrow::{Borrow, BorrowMut};
 use binary_heap_plus::BinaryHeap;
 use compare::Compare;
 use std::cmp::Ordering;
@@ -8,9 +7,9 @@ use std::sync::atomic::AtomicUsize;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Coordinates {
-    x: f64,
-    y: f64,
-    h: f64,
+    pub x: f64,
+    pub y: f64,
+    pub h: f64,
 }
 
 pub struct Comparator {}
@@ -70,8 +69,8 @@ pub fn construct_topology(points: &Vec<RawPoint>) -> RoadGraph {
     }).collect::<Vec<_>>();
     for pos in 0..bound.len() {
         let info = &points[pos];
-        for i in 0..2 {
-            let mut pos = &mut bound[pos];
+        for _i in 0..2 {
+            let pos = &mut bound[pos];
             if let Some(p) = points.iter().zip(0..points.len())
                 .filter(|(p, id)| *id != pos.id && p.r1 == info.r1 && !pos.link_to.contains(id))
                 .map(|(p, id)| (p.location.compute_distance(&pos.location), id))
@@ -83,7 +82,7 @@ pub fn construct_topology(points: &Vec<RawPoint>) -> RoadGraph {
         }
         if info.r2 >= 0 {
             // try-connect policy - connect two more times
-            for i in 0..2 {
+            for _i in 0..2 {
                 let mut pos = &mut bound[pos];
                 if let Some(p) = points.iter().zip(0..points.len())
                     .filter(|(p, id)| *id != pos.id && p.r2 == info.r2 && !pos.link_to.contains(id))
@@ -140,7 +139,7 @@ fn test_road_parse() {
     assert!(optimized.iter().map(|v| v.iter().filter(|v1| v1.is_empty()).count()).sum::<usize>() <= optimized.len());
 }
 
-fn offline_bellman_ford(graph: &RoadGraph) -> Vec<Vec<Path>> {
+pub fn offline_bellman_ford(graph: &RoadGraph) -> Vec<Vec<Path>> {
     graph.iter().map(|pos| {
         let mut queue = BinaryHeap::with_capacity_by(graph.len(), |u: &Edge, v: &Edge| {
             u.2.partial_cmp(&v.2).unwrap()
@@ -189,22 +188,22 @@ fn offline_bellman_ford(graph: &RoadGraph) -> Vec<Vec<Path>> {
 }
 
 #[derive(Clone)]
-struct Drone {
+pub struct Drone {
     power: usize,
     location: Coordinates,
 }
 
 #[derive(Clone)]
-struct Workload {
-    id: usize,
-    severity: usize,
-    consumption: usize,
-    location: Coordinates,
-    drone: bool,
+pub struct Workload {
+    pub id: usize,
+    pub severity: usize,
+    pub consumption: usize,
+    pub location: Coordinates,
+    pub drone: bool,
 }
 
 #[derive(Clone)]
-struct Dispatch {
+pub struct Dispatch {
     id: usize,
     power: usize,
     severity: usize,
@@ -212,7 +211,7 @@ struct Dispatch {
 }
 
 #[derive(Clone)]
-struct Mission {
+pub struct Mission {
     id: usize,
     power: usize,
     severity: usize,
@@ -289,7 +288,7 @@ impl Dispatcher {
         }
     }
 
-    pub fn online_dispatch_round(&self, mut workload: Workload, ongoing: &Vec<Dispatch>, resources: &Vec<Drone>, global_id: AtomicUsize) -> (Vec<Mission>, Workload) {
+    pub fn online_dispatch_round(&self, mut workload: Workload, ongoing: &Vec<Dispatch>, resources: &Vec<Drone>, global_id: &AtomicUsize) -> (Vec<Mission>, Workload) {
         let mut solution = Self::next_sat(&workload, &ongoing, &resources);
         let mut missions = vec![];
         while workload.consumption > 0 && solution.0 > 0 {

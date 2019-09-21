@@ -100,6 +100,11 @@ impl DatabaseAccess {
                     level           INT,
                     description     VARCHAR
                   )", &[]).unwrap();
+        self.conn.execute("CREATE TABLE IF NOT EXISTS dispatch_routes (
+                    id              SERIAL PRIMARY KEY,
+                    xs              DOUBLE PRECISION[],
+                    ys              DOUBLE PRECISION[]
+                    )", &[]).unwrap();
         self.conn.execute("CREATE TABLE IF NOT EXISTS init_data (
                     key             VARCHAR PRIMARY KEY,
                     value           VARCHAR

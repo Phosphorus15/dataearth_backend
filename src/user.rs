@@ -42,7 +42,7 @@ pub fn add_user(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<AddUserI
     HttpResponse::Ok().content_type("application/json").body("{result: \"failed\"}")
 }
 
-pub fn logout(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<DeleteUserInfo>, request: HttpRequest) -> impl Responder {
+pub fn logout(database: Data<Arc<Mutex<DatabaseAccess>>>, request: HttpRequest) -> impl Responder {
     let cookie = request.cookie("sess");
     match cookie {
         None => {

@@ -36,7 +36,7 @@ pub fn delete_mark(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<Delet
 
 pub fn list_mark(database: Data<Arc<Mutex<DatabaseAccess>>>, request: HttpRequest) -> impl Responder {
     let info = crate::login::get_login(database.clone(), request);
-    if let Some(i) = info {
+    if let Some(_i) = info {
         return HttpResponse::Ok().content_type("application/json").body(
             serde_json::to_string(&Marks { inner: database.lock().unwrap().find_mark() })
                 .unwrap()
@@ -47,7 +47,7 @@ pub fn list_mark(database: Data<Arc<Mutex<DatabaseAccess>>>, request: HttpReques
 
 pub fn update_mark(database: Data<Arc<Mutex<DatabaseAccess>>>, request: HttpRequest, req: Json<Vec<i32>>) -> impl Responder {
     let info = crate::login::get_login(database.clone(), request);
-    if let Some(i) = info {
+    if let Some(_i) = info {
         let marks = database.lock().unwrap().find_mark();
         let mut remove = req.iter()
             .filter(|v| !marks.iter().any(|p| p.uid as i32 == **v))

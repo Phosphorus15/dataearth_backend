@@ -214,9 +214,6 @@
             initialType();
             ko.applyBindings(theviewModel, document.getElementById('toolbar'));
             initialCheck();
-            if (!initialOrNot && usertype !== 1) {
-                window.location = './login.html';
-            }
         });
         var viewer;
         var initialOrNot = true;
@@ -291,18 +288,12 @@
                 params: request,
                 success: function (json) {
                     initialOrNot = json.result;
-                    if (initialOrNot) {
-                        initial();
-                        initialMap();
-                        cancel();
-                        initialPs();
-                        initialMark();
-                        setInterval(updateMark, 10000);
-                    } else {
-                        if (usertype !== -1) {
-                            window.location = "login.html";
-                        }
-                    }
+                    initial();
+                    initialMap();
+                    cancel();
+                    initialPs();
+                    initialMark();
+                    setInterval(updateMark, 10000);
                 },
                 failure: function () {
                     initialOrNot = false;

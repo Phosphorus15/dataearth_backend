@@ -1,10 +1,13 @@
-use actix_web::{HttpServer, App, Responder, HttpMessage};
+use actix_web::{ Responder, HttpMessage};
 use actix_web::HttpRequest;
 use actix_web::web::*;
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 use crate::database::DatabaseAccess;
 use actix_web::cookie::CookieBuilder;
+use actix::Addr;
+use crate::dispatcher::DispatcherService;
+use crate::dispatch::{Workload, Coordinates};
 
 #[derive(Deserialize)]
 pub struct LoginInfo {
@@ -38,7 +41,7 @@ pub fn get_login_type(database: Data<Arc<Mutex<DatabaseAccess>>>, request: HttpR
     HttpResponse::Ok().content_type("application/json").body("{\"type\": -1}")
 }
 
-pub fn user_login(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<LoginInfo>) -> impl Responder {
+pub fn user_login(database: Data<Arc<Mutex<DatabaseAccess>>>, dispatcher: Data<Addr<DispatcherService>>, login: Json<LoginInfo>) -> impl Responder {
     let db = database.lock().unwrap();
     let user = db.find_user(login.name.clone());
     match user {
