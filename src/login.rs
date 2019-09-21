@@ -25,7 +25,7 @@ pub fn get_login(database: Data<Arc<Mutex<DatabaseAccess>>>, request: HttpReques
             None
         }
         Some(token) => {
-            database.try_lock().unwrap().find_login(token.value().to_string())
+            database.lock().unwrap().find_login(token.value().to_string())
         }
     }
 }
@@ -39,7 +39,7 @@ pub fn get_login_type(database: Data<Arc<Mutex<DatabaseAccess>>>, request: HttpR
 }
 
 pub fn user_login(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<LoginInfo>) -> impl Responder {
-    let db = database.try_lock().unwrap();
+    let db = database.lock().unwrap();
     let user = db.find_user(login.name.clone());
     match user {
         None => {

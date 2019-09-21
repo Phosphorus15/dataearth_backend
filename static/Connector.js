@@ -12,11 +12,10 @@
 Connector = function(opts){
     $.ajax({
         url:opts.url,
-        data:{
-            request: JSON.stringify(opts.params)
-        },
+        data:JSON.stringify(opts.params),
         method:"POST",
         dataType: "json",
+        contentType: "text/json",
         success:function(data){
             opts.success(data);
         },

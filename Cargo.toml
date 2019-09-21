@@ -19,6 +19,10 @@ binary-heap-plus = "0.2.0"
 compare = "0.1.0"
 json = "0.12.0"
 sha2 = "0.8.0"
+hex = "0.4.0"
+rust_decimal = {version = "1.0.3", features = ["postgres"]}
+actix-multipart = "0.1.4"
+futures = "0.1.29"
 
 [build-dependencies]
 actix-web-static-files = "0.2.3"

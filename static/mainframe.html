@@ -211,19 +211,11 @@
     </style>
     <script>
         $(document).ready(function () {
-            ko.applyBindings(theviewModel, document.getElementById('toolbar'));
             initialType();
+            ko.applyBindings(theviewModel, document.getElementById('toolbar'));
             initialCheck();
             if (!initialOrNot && usertype !== 1) {
-                window.location.href = 'login_interface.html';
-            }
-            initial();
-            initialMap();
-            cancel();
-            if (initialOrNot) {
-                initialPs();
-                initialMark();
-                setInterval(updateMark, 10000);
+                window.location = './login.html';
             }
         });
         var viewer;
@@ -256,17 +248,17 @@
             ];
             $('.cesium-viewer').append(buttonWrap);
             buttons.forEach(function (item) {
-                buttonWrap.append(`<button id="${item.id}" class="button"><a href="login_interface.html">${item.value}</a></button>`);
+                buttonWrap.append(`<button id="${item.id}" class="button"><a href="login.html">${item.value}</a></button>`);
             });
             $('#exit').on('click', function () {
                 var request = {};
-//                        Connector({
-//                            url: "/user/logout",
-//                            params: request,
-//                            success: function (json) {
-//                            
-//                            }
-//                        });
+                Connector({
+                    url: "/user/logout",
+                    params: request,
+                    success: function (json) {
+
+                    }
+                });
             })
             policeMark = viewer.entities.add(new Cesium.Entity({id: 'policeMark'}));
             caseMark = viewer.entities.add(new Cesium.Entity({id: 'caseMark'}));
@@ -280,12 +272,13 @@
                 params: request,
                 success: function (json) {
                     usertype = json.type;
-                    alert("请先登录 ！");
                     if (usertype === -1) {
+                        alert("请先登录 ！");
                         window.location = "/";
                     }
                 },
                 failure: function () {
+                    alert("请先登录 ！");
                     window.location = "/";
                 }
             });
@@ -293,89 +286,103 @@
 
         function initialCheck() {
             var request = {};
-//                        Connector({
-//                            url: "/init/check",
-//                            params: request,
-//                            success: function (json) {
-//                             initialOrNot = json;
-//                            }
-//                        });
+            Connector({
+                url: "/init/check",
+                params: request,
+                success: function (json) {
+                    initialOrNot = json.result;
+                    if (initialOrNot) {
+                        initial();
+                        initialMap();
+                        cancel();
+                        initialPs();
+                        initialMark();
+                        setInterval(updateMark, 10000);
+                    } else {
+                        if (usertype !== -1) {
+                            window.location = "login.html";
+                        }
+                    }
+                },
+                failure: function () {
+                    initialOrNot = false;
+                }
+            });
         }
 
         function initialMap() {
-//                var request = {};
-//                Connector({
-//                    url: "/data/request",
-//                    params: request,
-//                    success: function (json) {
-//                    var 3durl;
-//                    var 3ddstoken;
-//                    var road;
-//                    if(3durl!="" || 3ddstoken!=""){
-//                        var tileset = new Cesium.DE3DTileset({
-//                            url: 3durl,
-//                            viewer: viewer,
-//                            dstoken: 3ddstoken,
-//                            shadows:Cesium.ShadowMode.ENABLED
-//                        });
-//                        viewer.tilesetLayers.add(tileset);
-//                        viewer.flyTo(tileset);
-//                    }
-//                    if(road!=""){
-//                    
-//                    }
-//                    }
-//                });
+            if (!initialOrNot) return;
+            var request = {};
+            Connector({
+                url: "/data/request",
+                params: request,
+                success: function (json) {
+                    var _3durl = json["3durl"];
+                    var _3ddstoken = json["3ddstoken"];
+                    if (_3durl != "" || _3ddstoken != "") {
+                        var tileset = new Cesium.DE3DTileset({
+                            url: _3durl,
+                            viewer: viewer,
+                            dstoken: _3ddstoken,
+                            shadows: Cesium.ShadowMode.ENABLED
+                        });
+                        viewer.tilesetLayers.add(tileset);
+                        viewer.flyTo(tileset);
+                    }
+                }
+            });
         }
 
         function initialMark() {
-//                var requestMark = {};
-//                Connector({
-//                    url: "/data/get_mark",
-//                    params: requestMark,
-//                    success: function (json) {
-//                        for (var i = 0; i < json.length; i++) {
-//                            addCasePoint(json[i]);
-//                        }
-//                    }
-//                });
+            var requestMark = {};
+            Connector({
+                url: "/data/get_mark",
+                params: requestMark,
+                success: function (json_list) {
+                    json = json_list.inner;
+                    for (var i = 0; i < json.length; i++) {
+                        addCasePoint(json[i]);
+                    }
+                }
+            });
         }
 
 
         function initialPs() {
-//                var request = {};
-//                Connector({
-//                    url: "/data/get_mark",
-//                    params: request,
-//                    success: function (json) {
-//                        for (var i = 0; i < json.length; i++) {
-//                             addPolicePoint(json[i]);
-//                        }
-//                    }
-//                });
+            var request = {};
+            Connector({
+                url: "/data/get_ps",
+                params: request,
+                success: function (json_list) {
+                    json = json_list.inner;
+                    for (var i = 0; i < json.length; i++) {
+                        addPolicePoint(json[i]);
+                    }
+                }
+            });
         }
 
         function updateMark() {
-//                var request = {casenumbers};
-//                Connector({
-//                    url: "/data/mark/ping",
-//                    params: request,
-//                    success: function (json) {
-//                        for (var i = 0; i < json.length; i++) {
-//                            var index = indexOf(casenumbers, json[i].uid);
-//                            if (index > -1) {
-//                                viewer.entities.removeById(json[i].uid);
-//                                var theplane = viewer.entities.getById('plane_'+json[i].uid);
-//                                        if(typeof(theplane)!=='undefined'){
-//                                            viewer.entities.remove(theplane);
-//                                        }
-//                                casenumbers.splice(index, 1);
-//                            } else {
-//                                addCasePoint(json[i]);
-//                            }
-//                        }
-//                    }
-//                });
+            var request = {casenumbers};
+            Connector({
+                url: "/data/mark/ping",
+                params: casenumbers,
+                success: function (json) {
+                    for (var i = 0; i < json.length; i++) {
+                        var index = indexOf(casenumbers, json[i].uid);
+                        if (index > -1) {
+                            viewer.entities.removeById(json[i].uid);
+                            var theplane = viewer.entities.getById('plane_' + json[i].uid);
+                            if (typeof (theplane) !== 'undefined') {
+                                viewer.entities.remove(theplane);
+                            }
+                            casenumbers.splice(index, 1);
+                        } else {
+                            addCasePoint(json[i]);
+                        }
+                    }
+                }
+            });
         }
 
         function updateRoute() {
@@ -417,6 +424,7 @@
         }
 
         var theviewModel = function () {
+            alert("欢迎登入警务系统");
             this.thefunctions = ko.observableArray([
                 {
                     functiontype: 'city',
@@ -522,7 +530,7 @@
             thehandler.setInputAction(function (movement) {
                 var pick = viewer.scene.pick(movement.position);
                 if (Cesium.defined(pick) && typeof (pick.id) !== 'undefined') {
-                    if ((pick.id.parent.id === 'caseMark' && usertype !== 1) || (pick.id.parent.id === 'policeMark' && usertype === 1)) {
+                    if ((pick.id.parent.id === 'caseMark' && usertype === 2) || (pick.id.parent.id === 'policeMark' && usertype === 1)) {
                         layer.open({
                             type: 1,
                             title: '',
@@ -532,21 +540,22 @@
                             yes: function (index, layero) {
                                 var request = {id: pick.id.id};
                                 if (pick.id.parent.id === 'policeMark') {
-//                                        Connector({
-//                                            url: "/ps/delete",
-//                                            params: request,
-//                                            success: function (json) {
-//
-//                                            }
-//                                        });
+                                    Connector({
+                                        url: "/ps/delete",
+                                        params: request,
+                                        success: function (json) {
+
+                                        }
+                                    });
                                 } else {
-//                                        Connector({
-//                                            url: "/mark/delete",
-//                                            params: request,
-//                                            success: function (json) {
-//
-//                                            }
-//                                        });
+                                    var request = {uid: pick.id.id};
+                                    Connector({
+                                        url: "/mark/delete",
+                                        params: request,
+                                        success: function (json) {
+
+                                        }
+                                    });
                                     var theindex = indexOf(casenumbers, pick.id.id);
                                     casenumbers.splice(theindex, 1);
                                 }
@@ -672,6 +681,14 @@
                     viewer.flyTo(tileset);
                     $("#layerDialogWrap1").remove();
                     layer.close(index);
+                    Connector({
+                            url: "/data/init",
+                            params: {"3durl": url, "3ddstoken": dstoken},
+                            success: function (json) {
+
+                            }
+                        }
+                    )
                 }
             })
         }
@@ -734,7 +751,7 @@
                 var upload = layui.upload;
                 var RoadFile = upload.render({
                     elem: '#Road'
-//                        , url: '/upload/' //上传的url
+                    , url: '/upload/road' //上传的url
                     , accept: 'file'
                     , exts: 'geojson'
                     , done: function (res) {
@@ -757,7 +774,7 @@
 
                 var PointFile = upload.render({
                     elem: '#Point'
-//                        , url: '/upload/' //上传的url
+                    , url: '/upload/point' //上传的url
                     , accept: 'file'
                     , exts: 'geojson'
                     , done: function (res) {
@@ -897,12 +914,12 @@
                             crew: crew,
                             drones: drones
                         };
-//                        Connector({
-//                            url: "/init/ps",
-//                            params: request,
-//                            success: function (json) {
-//                            }
-//                        });
+                        Connector({
+                            url: "/init/ps",
+                            params: request,
+                            success: function (json) {
+                            }
+                        });
                         addPolicePoint(request);
                         $("#layerDialogWrap3").remove();
                         layer.close(index);
@@ -1034,23 +1051,20 @@
                             drone: drone,
                             desc: desc
                         };
-                        var uid = 1;
-//                        Connector({
-//                            url: "/data/mark",
-//                            params: request,
-//                            success: function (json) {
-//                               
-//                               addCasePoint(json);
-//                            } 
-//                        });
-                        var newrequest = {
-                            uid: uid,
-                            position: position,
-                            level: level,
-                            drone: drone,
-                            desc: desc
-                        };
-                        addCasePoint(newrequest);
+                        Connector({
+                            url: "/data/mark",
+                            params: request,
+                            success: function (json) {
+                                var newrequest = {
+                                    uid: json.id,
+                                    position: position,
+                                    level: level,
+                                    drone: drone,
+                                    desc: desc
+                                };
+                                addCasePoint(newrequest);
+                            }
+                        });
                         $("#layerDialogWrap4").remove();
                         layer.close(index);
                     }
@@ -1396,13 +1410,13 @@
                                     password: SHA256pw
                                 };
                                 console.log(request);
+                                Connector({
+                                    url: "/user/add",
+                                    params: request,
+                                    success: function (json) {
+                                    }
+                                });
                             }
-//                        Connector({
-//                            url: "/user/add",
-//                            params: request,
-//                            success: function (json) {
-//                            }
-//                        });
                             $("#user").val("");
                             $("#password").val("");
                         } else {

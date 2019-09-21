@@ -1,5 +1,7 @@
 use postgres::*;
 use serde::{Deserialize, Serialize};
+use rust_decimal::prelude::*;
+use rust_decimal::*;
 
 pub struct DatabaseAccess {
     conn: Connection
@@ -21,30 +23,38 @@ pub struct LoginInfo {
     pub user_type: i32,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Copy)]
 pub struct Position {
-    x: f64,
-    y: f64,
-    z: f64,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct PoliceStation {
-    id: String,
-    name: String,
-    position: Position,
-    crew: Vec<String>,
-    drones: i32,
+    pub id: String,
+    pub name: String,
+    pub position: Position,
+    pub crew: Vec<String>,
+    pub drones: i32,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct OperatorMark {
-    uid: i32,
-    position: Position,
-    height: f64,
-    level: i32,
-    drone: bool,
-    desc: String,
+    pub uid: u128,
+    pub position: Position,
+    pub height: f64,
+    pub level: i32,
+    pub drone: bool,
+    pub desc: String,
+}
+
+#[derive(Deserialize, Serialize, Clone)]
+pub struct UnifiedData {
+    #[serde(rename = "3durl")]
+    _3durl: String,
+    #[serde(rename = "3ddstoken")]
+    _3ddstoken: String,
 }
 
 impl DatabaseAccess {
@@ -73,20 +83,20 @@ impl DatabaseAccess {
                     id              SERIAL PRIMARY KEY,
                     uid             VARCHAR NOT NULL,
                     name            VARCHAR NOT NULL,
-                    positionX       NUMERIC,
-                    positionY       NUMERIC,
-                    positionZ       NUMERIC,
+                    positionX       DOUBLE PRECISION,
+                    positionY       DOUBLE PRECISION,
+                    positionZ       DOUBLE PRECISION,
                     crew            VARCHAR[],
                     drone           INT
                   )", &[]).unwrap();
         self.conn.execute("CREATE TABLE IF NOT EXISTS telephone_operator_data (
                     id              SERIAL PRIMARY KEY,
-                    uid             INT,
-                    positionX       NUMERIC,
-                    positionY       NUMERIC,
-                    positionZ       NUMERIC,
+                    uid             DECIMAL,
+                    positionX       DOUBLE PRECISION,
+                    positionY       DOUBLE PRECISION,
+                    positionZ       DOUBLE PRECISION,
                     drone           BOOL,
-                    height          NUMERIC,
+                    height          DOUBLE PRECISION,
                     level           INT,
                     description     VARCHAR
                   )", &[]).unwrap();
@@ -123,7 +133,6 @@ impl DatabaseAccess {
 }
 
 impl DatabaseAccess {
-
     pub fn try_init(&self) -> bool {
         let rows = self.conn
             .query("SELECT * FROM init_data",
@@ -136,20 +145,54 @@ impl DatabaseAccess {
             drop(users);
             self.add_user(User {
                 username: "admin".to_string(),
-                passwd:
+                passwd: crate::fast_sha256("adminadmin"), // init passwd - admin
+                user_type: 1,
             })
+        } else if rows.len() > 1 {
+            return true
         }
-        true
+        false
     }
 
+    pub fn feed_init(&self, data: UnifiedData) {
+        self.conn.execute("INSERT INTO init_data (key, value) VALUES ('3durl', $1)"
+                          , &[&data._3durl]).unwrap();
+        self.conn.execute("INSERT INTO init_data (key, value) VALUES ('3ddstoken', $1)"
+                          , &[&data._3ddstoken]).unwrap();
+    }
+
+    pub fn load_init(&self) -> UnifiedData {
+        let mut unified = UnifiedData{
+            _3ddstoken: String::new(),
+            _3durl: String::new()
+        };
+        let data = self.conn.query("SELECT * FROM init_data", &[]).unwrap();
+        data.iter().for_each(|v|
+            {
+                match &(v.get::<usize, String>(0))[..] {
+                    "3durl" => {
+                        unified._3durl = v.get::<usize, String>(1).clone();
+                    }
+                    "3ddstoken" => {
+                        unified._3ddstoken = v.get::<usize, String>(1).clone();
+                    }
+                    _ => {}
+                }
+            }
+        );
+        unified
+    }
 }
 
 impl DatabaseAccess {
-    pub fn add_mark(&self, telephone_operator: OperatorMark) {
+    pub fn add_mark(&self, telephone_operator: OperatorMark) -> i32 {
         self.conn.execute(
             "INSERT INTO telephone_operator_data (uid, positionX, positionY, positionZ, drone, height, level, desc) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) "
-            , &[&telephone_operator.uid, &telephone_operator.position.x, &telephone_operator.position.y, &telephone_operator.position.z, &telephone_operator.drone,
+            , &[&Decimal::from_u128(telephone_operator.uid).unwrap(), &telephone_operator.position.x, &telephone_operator.position.y, &telephone_operator.position.z, &telephone_operator.drone,
                 &telephone_operator.height, &telephone_operator.level, &telephone_operator.desc]).unwrap();
+        let rows = self.conn.query("SELECT id FROM telephone_operator_data WHERE uid = $1"
+                                   , &[&Decimal::from_u128(telephone_operator.uid).unwrap()]).unwrap();
+        rows.iter().collect::<Vec<_>>().first().unwrap().get(0)
     }
 
     pub fn find_mark(&self) -> Vec<OperatorMark> {
@@ -158,7 +201,7 @@ impl DatabaseAccess {
                    &[]).unwrap();
         let marks: Vec<OperatorMark> = rows.iter().map(|row| {
             OperatorMark {
-                uid: row.get(1),
+                uid: row.get::<usize, i32>(0) as u128,
                 position: Position {
                     x: row.get(2),
                     y: row.get(3),
@@ -174,7 +217,7 @@ impl DatabaseAccess {
     }
 
     pub fn delete_mark(&self, uid: i32) -> bool {
-        self.conn.execute("DELETE FROM telephone_operator_data WHERE uid=$1"
+        self.conn.execute("DELETE FROM telephone_operator_data WHERE id=$1"
                           , &[&uid]).is_ok()
     }
 }
@@ -182,8 +225,12 @@ impl DatabaseAccess {
 impl DatabaseAccess {
     pub fn add_police_station(&self, police_station: PoliceStation) {
         self.conn.execute(
-            "INSERT INTO police_station_data (uid, name, positionX, positionY, positionZ, crew, drones) VALUES ($1, $2, $3, $4, $5, $6, $7) "
-            , &[&police_station.id, &police_station.name, &police_station.position.x, &police_station.position.y, &police_station.position.z, &police_station.crew, &police_station.drones]).unwrap();
+            "INSERT INTO police_station_data (uid, name, positionX, positionY, positionZ, crew, drone) VALUES ($1, $2, $3, $4, $5, $6, $7) "
+            , &[&police_station.id, &police_station.name,
+                &police_station.position.x,
+                &police_station.position.y,
+                &police_station.position.z,
+                &police_station.crew, &police_station.drones]).unwrap();
     }
 
     pub fn find_police_station(&self) -> Vec<PoliceStation> {

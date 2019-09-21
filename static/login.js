@@ -29,7 +29,7 @@ function doLogin() {
         method: "post",
         contentType: "text/json",
         dataType: "json",
-        data: JSON.stringify({name: username, passwd: password, user_type: typeVal}),
+        data: JSON.stringify({name: username, passwd: sha256_digest(username + password), user_type: typeVal}),
         success: function (val) {
             const ret = val.result;
             if (ret === "success") {
