@@ -30,12 +30,20 @@ pub fn get_login(database: Data<Arc<Mutex<DatabaseAccess>>>, request: HttpReques
     }
 }
 
+pub fn get_login_type(database: Data<Arc<Mutex<DatabaseAccess>>>, request: HttpRequest) -> impl Responder {
+    let info = crate::login::get_login(database.clone(), request);
+    if let Some(i) = info {
+        return HttpResponse::Ok().content_type("application/json").body(format!("{{\"type\": {} }}", i.user_type));
+    }
+    HttpResponse::Ok().content_type("application/json").body("{\"type\": -1}")
+}
+
 pub fn user_login(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<LoginInfo>) -> impl Responder {
     let db = database.try_lock().unwrap();
     let user = db.find_user(login.name.clone());
     match user {
         None => {
-            HttpResponse::Ok().body(serde_json::to_string(&LoginResult {
+            HttpResponse::Ok().content_type("application/json").body(serde_json::to_string(&LoginResult {
                 result: "User not found !"
             }).unwrap())
         }
@@ -48,16 +56,16 @@ pub fn user_login(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<LoginI
                         user_type: login.user_type,
                         token: uuid.to_string(),
                     });
-                    HttpResponse::Ok().cookie(CookieBuilder::new("sess", uuid).path("/").secure(false).finish()).body(serde_json::to_string(&LoginResult {
+                    HttpResponse::Ok().content_type("application/json").cookie(CookieBuilder::new("sess", uuid).path("/").secure(false).finish()).body(serde_json::to_string(&LoginResult {
                         result: "success"
                     }).unwrap())
                 } else {
-                    HttpResponse::Ok().body(serde_json::to_string(&LoginResult {
+                    HttpResponse::Ok().content_type("application/json").body(serde_json::to_string(&LoginResult {
                         result: "User not found !"
                     }).unwrap())
                 }
             } else {
-                HttpResponse::Ok().body(serde_json::to_string(&LoginResult {
+                HttpResponse::Ok().content_type("application/json").body(serde_json::to_string(&LoginResult {
                     result: "Password is wrong !"
                 }).unwrap())
             }

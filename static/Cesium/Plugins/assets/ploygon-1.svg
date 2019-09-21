@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16px" height="15px" viewBox="0 0 16 15" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.2 (67145) - http://www.bohemiancoding.com/sketch -->
+    <title>绘制面</title>
+    <desc>Created with Sketch.</desc>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="绘制面插件" transform="translate(-30.000000, -80.000000)" fill="#D8D8D8">
+            <g id="绘制面" transform="translate(30.000000, 80.000000)">
+                <path d="M4.82929429,14 C4.93984578,13.6872211 5,13.3506354 5,13 C5,11.3431458 3.65685425,10 2,10 L2,5 C3.65685425,5 5,3.65685425 5,2 L11,2 C11,3.65685425 12.3431458,5 14,5 L14,10 C12.3431458,10 11,11.3431458 11,13 C11,13.3506354 11.0601542,13.6872211 11.1707057,14 L4.82929429,14 Z" id="合并形状"></path>
+                <circle id="椭圆形" cx="2" cy="2" r="2"></circle>
+                <circle id="椭圆形-copy-3" cx="14" cy="2" r="2"></circle>
+                <circle id="椭圆形-copy-5" cx="14" cy="13" r="2"></circle>
+                <circle id="椭圆形-copy-7" cx="2" cy="13" r="2"></circle>
+            </g>
+        </g>
+    </g>
+</svg>

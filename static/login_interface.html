@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>警务调度系统登录</title>
+
+    <link rel="stylesheet" href="Bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="Bootstrap/css/bootstrap-theme.css">
+
+    <script src="Bootstrap/jquery-3.3.1.min.js" type="text/javascript"></script>
+    <script src="Bootstrap/js/bootstrap.js"></script>
+    <style>
+        .img_bg {
+            overflow: hidden;
+            position: relative;
+        }
+
+        .img_bg:before {
+            content: " ";
+            background: url(Bootstrap/jumbotron.png);
+            display: block;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            position: absolute;
+            opacity: 0.4;
+        }
+
+        .img_bg * {
+            z-index: 2;
+            opacity: 1.0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="img_bg jumbotron" id="img_bg">
+            <!-- <style>.jumbotron{ http://cdn5.img.sputniknews.com/images/101897/46/1018974621.jpg;}</style> -->
+            <!-- <img alt="140x140" src="http://cdn5.img.sputniknews.com/images/101897/46/1018974621.jpg" -->
+            <!-- class="img-responsive center-block" alt="Responsive image"> -->
+            <h1>DataEarth</h1>
+            <p>警务调度系统</p>
+        </div>
+        <hr />
+
+        <div id="loginpage" class="row-fluid">
+            <div class="col-md-8 col-md-offset-2">
+                <form class="form-horizontal well" id="form_login" action="register.php" method="POST">
+                    <h1 class="center" style="text-align:center">账号登陆</h1>
+                    <hr style="border-bottom-color:#E5E5E5;">
+                    <div class="row">
+                        <div class="input-group col-md-6 col-md-offset-3">
+
+                            <span class="input-group-addon" id="basic-addon1"><span class="glyphicon glyphicon-user"
+                                    aria-hidden="true"></span>Username</span>
+                            <input type="text" class="form-control" placeholder="Username"
+                                aria-describedby="basic-addon1">
+                        </div>
+                    </div>
+                    <br />
+
+                    <div class="row">
+                        <div class="input-group col-md-6 col-md-offset-3">
+                            <span class="input-group-addon" id="basic-addon2"><span class="glyphicon glyphicon-lock"
+                                    aria-hidden="true"></span> Password</span>
+                            <input type="password" class="form-control" placeholder="Password"
+                                aria-describedby="basic-addon2">
+
+                        </div>
+                    </div>
+                    <br />
+
+                    <div class="btn-group col-md-offset-5" data-toggle="buttons">
+                        <label class="btn btn-primary active">
+                            <input type="radio" name="options" id="option1" autocomplete="off" checked> 接线员
+                        </label>
+                        <label class="btn btn-primary">
+                            <input type="radio" name="options" id="option2" autocomplete="off"> 管理员
+                        </label>
+                        <label class="btn btn-primary">
+                            <input type="radio" name="options" id="option3" autocomplete="off"> 警员
+                        </label>
+
+                    </div>
+                    <br />
+                    <br />
+
+                    <div style="text-align:center">
+                        <button class="btn btn-default " type="submit">登录</button>
+                    </div>
+                </form>
+                <hr />
+                <div style="text-align:center">
+                    <a href="https://dataearth.airlook.com/" target="_blank">DataEarth</a>
+                </div>
+                <p style="text-align:center">Copyright &copy; XXXXXXXXX有限公司</p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

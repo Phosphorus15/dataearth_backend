@@ -18,12 +18,15 @@ fn main_page(database: Data<Arc<Mutex<DatabaseAccess>>>, request: HttpRequest) -
     if login::get_login(database, request).is_none() {
         HttpResponse::Found().header("Location", "/static/login.html").finish()
     } else {
-        HttpResponse::Ok().body("success")
+        HttpResponse::Found().header("Location", "/static/mainframe.html").finish()
     }
 }
 
 fn main() {
-    let database = database::DatabaseAccess::default();
+    let database = database::DatabaseAccess::new(
+        //include_str!("../database.auth")
+        "postgres://postgres:12345@localhost:5432"
+    );
     database.init();
     let wrapped_db = Data::new(Arc::new(Mutex::new(database)));
     HttpServer::new(move || {
@@ -38,6 +41,7 @@ fn main() {
             .route("/", get().to(main_page))
             .route("/user/delete", post().to(user::delete_user))
             .route("/user/logout",post().to(user::logout))
+            .route("/user/type",post().to(login::get_login_type))
     })
         .bind("127.0.0.1:80").unwrap()
         .run().unwrap();

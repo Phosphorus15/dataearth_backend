@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="30px" height="3px" viewBox="0 0 30 3" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.2 (67145) - http://www.bohemiancoding.com/sketch -->
+    <title>虚线</title>
+    <desc>Created with Sketch.</desc>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" stroke-dasharray="2,6" stroke-linecap="square">
+        <g id="绘制线插件" transform="translate(-74.000000, -90.000000)" stroke="#EDEDED" stroke-width="3">
+            <g id="直线-4" transform="translate(74.000000, 90.000000)">
+                <path d="M2.36486486,1.5 L29,1.5" id="直线"></path>
+            </g>
+        </g>
+    </g>
+</svg>

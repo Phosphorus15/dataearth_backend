@@ -23,28 +23,28 @@ pub struct LoginInfo {
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct Position {
-    x:f32,
-    y:f32,
-    z:f32
+    x: f64,
+    y: f64,
+    z: f64,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct PoliceStation {
-    id:String,
-    name:String,
+    id: String,
+    name: String,
     position: Position,
     crew: Vec<String>,
-    drones:i32
+    drones: i32,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct OperatorMark {
-    uid:i32,
-    position:Position,
-    height:f32,
-    level:i32,
-    drone:bool,
-    desc:String
+    uid: i32,
+    position: Position,
+    height: f64,
+    level: i32,
+    drone: bool,
+    desc: String,
 }
 
 impl DatabaseAccess {
@@ -73,24 +73,28 @@ impl DatabaseAccess {
                     id              SERIAL PRIMARY KEY,
                     uid             VARCHAR NOT NULL,
                     name            VARCHAR NOT NULL,
-                    positionX       FLOAT,
-                    positionY       FLOAT,
-                    positionZ       FLOAT,
+                    positionX       NUMERIC,
+                    positionY       NUMERIC,
+                    positionZ       NUMERIC,
                     crew            VARCHAR[],
                     drone           INT
                   )", &[]).unwrap();
         self.conn.execute("CREATE TABLE IF NOT EXISTS telephone_operator_data (
                     id              SERIAL PRIMARY KEY,
                     uid             INT,
-                    positionX       FLOAT,
-                    positionY       FLOAT,
-                    positionZ       FLOAT,
+                    positionX       NUMERIC,
+                    positionY       NUMERIC,
+                    positionZ       NUMERIC,
                     drone           BOOL,
-                    height          FLOAT,
+                    height          NUMERIC,
                     level           INT,
-                    desc            VARCHAR
+                    description     VARCHAR
                   )", &[]).unwrap();
-}
+        self.conn.execute("CREATE TABLE IF NOT EXISTS init_data (
+                    key             VARCHAR PRIMARY KEY,
+                    value           VARCHAR
+                  )", &[]).unwrap();
+    }
 
     pub fn add_user(&self, user: User) {
         self.conn.execute(
@@ -106,7 +110,7 @@ impl DatabaseAccess {
             User {
                 username: row.get(1),
                 passwd: row.get(2),
-                user_type: row.get(3)
+                user_type: row.get(3),
             }
         }).collect();
         return users.first().map(|u| u.clone());
@@ -115,6 +119,27 @@ impl DatabaseAccess {
     pub fn delete_user(&self, username: String) -> bool {
         self.conn.execute("DELETE FROM user_data WHERE name=$1"
                           , &[&username]).is_ok()
+    }
+}
+
+impl DatabaseAccess {
+
+    pub fn try_init(&self) -> bool {
+        let rows = self.conn
+            .query("SELECT * FROM init_data",
+                   &[]).unwrap();
+        let users = self.conn
+            .query("SELECT * FROM user_data",
+                   &[]).unwrap();
+        if rows.len() < 1 && users.len() < 1 {
+            drop(rows);
+            drop(users);
+            self.add_user(User {
+                username: "admin".to_string(),
+                passwd:
+            })
+        }
+        true
     }
 
 }
@@ -134,15 +159,15 @@ impl DatabaseAccess {
         let marks: Vec<OperatorMark> = rows.iter().map(|row| {
             OperatorMark {
                 uid: row.get(1),
-                position: Position{
+                position: Position {
                     x: row.get(2),
                     y: row.get(3),
-                    z: row.get(4)
+                    z: row.get(4),
                 },
                 drone: row.get(5),
                 height: row.get(6),
-                level:row.get(7),
-                desc:row.get(8)
+                level: row.get(7),
+                desc: row.get(8),
             }
         }).collect();
         return marks;
@@ -152,14 +177,13 @@ impl DatabaseAccess {
         self.conn.execute("DELETE FROM telephone_operator_data WHERE uid=$1"
                           , &[&uid]).is_ok()
     }
-
 }
 
 impl DatabaseAccess {
     pub fn add_police_station(&self, police_station: PoliceStation) {
         self.conn.execute(
             "INSERT INTO police_station_data (uid, name, positionX, positionY, positionZ, crew, drones) VALUES ($1, $2, $3, $4, $5, $6, $7) "
-            , &[&police_station.id, &police_station.name, &police_station.position.x, &police_station.position.y, &police_station.position.z,&police_station.crew, &police_station.drones]).unwrap();
+            , &[&police_station.id, &police_station.name, &police_station.position.x, &police_station.position.y, &police_station.position.z, &police_station.crew, &police_station.drones]).unwrap();
     }
 
     pub fn find_police_station(&self) -> Vec<PoliceStation> {
@@ -168,16 +192,15 @@ impl DatabaseAccess {
                    &[]).unwrap();
         let police_station: Vec<PoliceStation> = rows.iter().map(|row| {
             PoliceStation {
-                id:row.get(1),
+                id: row.get(1),
                 name: row.get(2),
-                position: Position{
+                position: Position {
                     x: row.get(3),
                     y: row.get(4),
-                    z: row.get(5)
-
+                    z: row.get(5),
                 },
                 crew: row.get(6),
-                drones: row.get(7)
+                drones: row.get(7),
             }
         }).collect();
         return police_station;
@@ -205,7 +228,7 @@ impl DatabaseAccess {
             LoginInfo {
                 username: row.get(2),
                 token: row.get(1),
-                user_type: row.get(3)
+                user_type: row.get(3),
             }
         }).collect();
         return info.first().map(|u| u.clone());
@@ -213,7 +236,7 @@ impl DatabaseAccess {
 
     pub fn logout(&self, token: String) -> bool {
         self.conn.execute("DELETE FROM login_data WHERE token=$1"
-            , &[&token]).is_ok()
+                          , &[&token]).is_ok()
     }
 }
 

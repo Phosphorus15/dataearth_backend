@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="14px" height="14px" viewBox="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.2 (67145) - http://www.bohemiancoding.com/sketch -->
+    <title>颜色表</title>
+    <desc>Created with Sketch.</desc>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="实景模型属性设置" transform="translate(-135.000000, -314.000000)">
+            <g id="颜色表" transform="translate(135.000000, 314.000000)">
+                <rect id="矩形-copy-5" fill="#DEDEDE" x="0" y="0" width="6" height="6" rx="2"></rect>
+                <rect id="矩形-copy-7" fill="#DEDEDE" x="8" y="0" width="6" height="6" rx="2"></rect>
+                <rect id="矩形-copy-9" fill="#BABABA" x="8" y="8" width="6" height="6" rx="2"></rect>
+                <rect id="矩形-copy-10" fill="#DEDEDE" x="0" y="8" width="6" height="6" rx="2"></rect>
+            </g>
+        </g>
+    </g>
+</svg>

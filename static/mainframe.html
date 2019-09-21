@@ -1,0 +1,1451 @@
+<html>
+<head>
+    <title>警务调度系统主界面</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="Bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+    <link rel="stylesheet" href="Cesium/Plugins/assets/bucket.css">
+    <link href="Cesium/ThirdParty/layui/css/layui.css" rel="stylesheet" type="text/css"/>
+    <link href="Cesium/ThirdParty/colorPicker/spectrum.css" rel="stylesheet" type="text/css"/>
+    <link href="Cesium/Plugins/assets/plugins.min.css" rel="stylesheet" type="text/css"/>
+    <script src="Connector.js" type="text/javascript"></script>
+    <script src="SHA256.js" type="text/javascript"></script>
+    <script src="Bootstrap/jquery-3.3.1.min.js" type="text/javascript"></script>
+    <script src="Bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
+    <script src="Cesium/Cesium.js"></script>
+    <script src="Cesium/ThirdParty/colorPicker/spectrum.js" type="text/javascript"></script>
+    <script src="Cesium/Plugins/LayersManager.min.js" type="text/javascript"></script>
+    <script src="Cesium/ThirdParty/layui/layui.all.js" type="text/javascript"></script>
+    <script src="Cesium/ThirdParty/knockout/knockout-3.4.2.js" type="text/javascript"></script>
+    <script src="Cesium/Plugins/PlacePoint.min.js" type="text/javascript"></script>
+    <style>
+        #toolbar {
+            background: white;
+            width: 80px;
+            position: absolute;
+            height: 100%;
+            margin: 0px;
+            display: table;
+        }
+
+        #menu {
+            display: table-cell;
+            vertical-align: middle;
+        }
+
+        .cesium-viewer {
+            font-family: sans-serif;
+            font-size: 16px;
+            overflow: hidden;
+            display: block;
+            position: relative;
+            top: 0;
+            left: 80px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .nav-pills > li {
+            margin-left: 10px;
+        }
+
+        .nav-pills > li + li {
+            margin-left: 10px;
+        }
+
+        .glyphicon {
+            font-size: large
+        }
+
+        .glyphicon:hover:after {
+            position: absolute;
+            left: 15px;
+            top: 5px;
+            padding: 5px;
+            background-color: white;
+            border-radius: 5px;
+            color: black;
+            content: attr(title);
+            z-index: 2;
+            width: max-content;
+            font-size: 15px;
+        }
+
+        .layui-layer-page {
+            color: black;
+            width: 471px;
+            top: 80px;
+            left: 360px;
+        }
+
+        .layui-layer-title {
+            padding: 0;
+            color: #333;
+            background-color: #F8F8F8;
+            text-align: center;
+        }
+
+        .layersDialogTab {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            font-size: 12px;
+            line-height: 2.5;
+        }
+
+        .layersDialogTab li {
+            -webkit-box-flex: 1;
+            -ms-flex: 1;
+            flex: 1;
+            text-align: center;
+            border-bottom: 1px solid #2C2E31;
+        }
+
+        .layersDialogTab li.active {
+            border-bottom-color: #158ADA;
+        }
+
+        .layersDialogTab li a {
+            color: #D9D9D9;
+            cursor: pointer;
+        }
+
+        .content {
+            padding-top: 12px;
+        }
+
+        .content dl {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-align: center;
+            -ms-flex-align: center;
+            align-items: center;
+            margin: 10px;
+        }
+
+        .content dl dt {
+            width: 90px;
+            text-align: right;
+            padding-right: 10px;
+            padding-left: 10px;
+            font-size: smaller;
+        }
+
+        .content dl dd {
+            padding: 0;
+            background: none;
+            width: 70%;
+        }
+
+        .content dl dd input {
+            background: white;
+            width: 100%;
+            color: black;
+        }
+
+        .content dl dd button {
+            background: white;
+            width: 20%;
+            color: black;
+        }
+
+
+        .table > tbody > tr > td {
+            vertical-align: top;
+            border-top: black;
+            padding: 0px;
+            color: black;
+            text-align: center;
+        }
+
+        .table tr td input {
+            text-align: center;
+        }
+
+        #table {
+            height: 60px;
+            overflow-y: auto
+        }
+
+        .layui-layer-btn
+        .layui-layer-btn0 {
+            background: #F8F8F8;
+            border-radius: 4px;
+            height: 35px;
+            line-height: 35px;
+            font-size: 14px;
+            text-align: center;
+            margin: 10px auto;
+            width: 50%;
+            display: block;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            outline: none;
+            color: black;
+            border-color: black;
+        }
+
+        .toolbarwrap {
+            right: 100px;
+        }
+
+        .button {
+            background-color: white;
+            color: black;
+        }
+
+        .PlanWrap {
+            left: 30px;
+            position: absolute;
+            top: 0;
+        }
+
+        .sp-container {
+            padding-bottom: 0;
+            z-index: 100000000;
+        }
+
+    </style>
+    <script>
+        $(document).ready(function () {
+            ko.applyBindings(theviewModel, document.getElementById('toolbar'));
+            initialType();
+            initialCheck();
+            if (!initialOrNot && usertype !== 1) {
+                window.location.href = 'login_interface.html';
+            }
+            initial();
+            initialMap();
+            cancel();
+            if (initialOrNot) {
+                initialPs();
+                initialMark();
+                setInterval(updateMark, 10000);
+            }
+        });
+        var viewer;
+        var initialOrNot = true;
+        var usertype = 0;
+        var casenumbers = [];
+        var updateRouteVar;
+        var route = [];
+        var routeEntity;
+
+        function initial() {
+            viewer = new Cesium.Viewer('cesiumContainer', {
+                fullscreenButton: true,
+                highlight: true,
+                baseLayerPicker: true,
+                geocoder: true,
+                sceneModePicker: true,
+                infoBox: true
+            });
+            viewer.extend(viewerPlacePointMixin);
+            var google = new Cesium.UrlTemplateImageryProvider({
+                url: 'http://mt0.google.cn/vt/lyrs=s&hl=zh-CN&x={x}&y={y}&z={z}',
+                tilingScheme: new Cesium.WebMercatorTilingScheme(),
+                maximumLevel: 20
+            });
+            viewer.imageryLayers.addImageryProvider(google);
+            var buttonWrap = $('<div class="toolbarWrap"></div>');
+            var buttons = [
+                {'id': 'exit', 'value': '退出'},
+            ];
+            $('.cesium-viewer').append(buttonWrap);
+            buttons.forEach(function (item) {
+                buttonWrap.append(`<button id="${item.id}" class="button"><a href="login_interface.html">${item.value}</a></button>`);
+            });
+            $('#exit').on('click', function () {
+                var request = {};
+//                        Connector({
+//                            url: "/user/logout",
+//                            params: request,
+//                            success: function (json) {
+//                            
+//                            }
+//                        });
+            })
+            policeMark = viewer.entities.add(new Cesium.Entity({id: 'policeMark'}));
+            caseMark = viewer.entities.add(new Cesium.Entity({id: 'caseMark'}));
+            routeMark = viewer.entities.add(new Cesium.Entity({id: 'routeMark'}));
+        }
+
+        function initialType() {
+            var request = {};
+            Connector({
+                url: "/user/type",
+                params: request,
+                success: function (json) {
+                    usertype = json.type;
+                    alert("请先登录 ！");
+                    if (usertype === -1) {
+                        window.location = "/";
+                    }
+                },
+                failure: function () {
+                    window.location = "/";
+                }
+            });
+        }
+
+        function initialCheck() {
+            var request = {};
+//                        Connector({
+//                            url: "/init/check",
+//                            params: request,
+//                            success: function (json) {
+//                             initialOrNot = json;
+//                            }
+//                        });
+        }
+
+        function initialMap() {
+//                var request = {};
+//                Connector({
+//                    url: "/data/request",
+//                    params: request,
+//                    success: function (json) {
+//                    var 3durl;
+//                    var 3ddstoken;
+//                    var road;
+//                    if(3durl!="" || 3ddstoken!=""){
+//                        var tileset = new Cesium.DE3DTileset({
+//                            url: 3durl,
+//                            viewer: viewer,
+//                            dstoken: 3ddstoken,
+//                            shadows:Cesium.ShadowMode.ENABLED
+//                        });
+//                        viewer.tilesetLayers.add(tileset);
+//                        viewer.flyTo(tileset);
+//                    }
+//                    if(road!=""){
+//                    
+//                    }
+//                    }
+//                });
+        }
+
+        function initialMark() {
+//                var requestMark = {};
+//                Connector({
+//                    url: "/data/get_mark",
+//                    params: requestMark,
+//                    success: function (json) {
+//                        for (var i = 0; i < json.length; i++) {
+//                            addCasePoint(json[i]);
+//                        }
+//                    }
+//                });
+        }
+
+
+        function initialPs() {
+//                var request = {};
+//                Connector({
+//                    url: "/data/get_mark",
+//                    params: request,
+//                    success: function (json) {
+//                        for (var i = 0; i < json.length; i++) {
+//                             addPolicePoint(json[i]);
+//                        }
+//                    }
+//                });
+        }
+
+        function updateMark() {
+//                var request = {casenumbers};
+//                Connector({
+//                    url: "/data/mark/ping",
+//                    params: request,
+//                    success: function (json) {
+//                        for (var i = 0; i < json.length; i++) {
+//                            var index = indexOf(casenumbers, json[i].uid);
+//                            if (index > -1) {
+//                                viewer.entities.removeById(json[i].uid);
+//                                var theplane = viewer.entities.getById('plane_'+json[i].uid);
+//                                        if(typeof(theplane)!=='undefined'){
+//                                            viewer.entities.remove(theplane);
+//                                        }
+//                                casenumbers.splice(index, 1);
+//                            } else {
+//                                addCasePoint(json[i]);
+//                            }
+//                        }
+//                    }
+//                });
+        }
+
+        function updateRoute() {
+            var request = {};
+//                Connector({
+//                    url: "/route",
+//                    params: request,
+//                    success: function (json) {
+//                        var array = [];
+//                        for (var i = 0; i < json.length; i++) {
+//                            array.push(json[i]);
+//                        }
+//                        if (route === array) {
+//                        } else {
+//                            route = array;
+//                            routeEntity.polyline.positions = Cesium.Cartesian3.fromDegreesArray(array);
+//                        }
+//                    }
+//                });
+            var myDate = new Date;
+            var s = myDate.getSeconds();
+            var l1 = s - 65;
+            var l2 = s - 125;
+            var array = [l1, 35, l2, 35];
+            if (route === array) {
+            } else {
+                route = array;
+                routeEntity.polyline.positions = Cesium.Cartesian3.fromDegreesArray(array);
+            }
+
+        }
+
+        function indexOf(arr, value) {
+            for (var i = 0; i < arr.length; i++) {
+                if (arr[i] === value)
+                    return i;
+            }
+            return -1;
+        }
+
+        var theviewModel = function () {
+            this.thefunctions = ko.observableArray([
+                {
+                    functiontype: 'city',
+                    marker: 'glyphicon glyphicon-globe',
+                    tooltip: '导入城市实景模型',
+                    ableornot: usertype === 1 ? true : false
+                },
+                {
+                    functiontype: 'road',
+                    marker: 'glyphicon glyphicon-road',
+                    tooltip: '导入城市道路数据',
+                    ableornot: usertype === 1 ? true : false
+                },
+                {
+                    functiontype: 'police',
+                    marker: 'glyphicon glyphicon-map-marker',
+                    tooltip: '进行警局初始化',
+                    ableornot: usertype === 1 ? true : false
+                },
+                {
+                    functiontype: 'mark',
+                    marker: 'glyphicon glyphicon-map-marker',
+                    tooltip: '进行案情标记',
+                    ableornot: initialOrNot === true && usertype === 0 ? true : false
+                },
+                {
+                    functiontype: 'situation',
+                    marker: 'glyphicon glyphicon-eye-open',
+                    tooltip: '查看警力调度情况',
+                    ableornot: initialOrNot === true ? true : false
+                },
+                {
+                    functiontype: 'user',
+                    marker: 'glyphicon glyphicon-user',
+                    tooltip: '账户编辑',
+                    ableornot: usertype === 1 ? true : false
+                }
+            ]);
+//                ableornot: usertype === 1 ? true : false
+            this.ShowDlg = function (type) {
+                switch (type) {
+                    case 'city':
+                        showCityModelDlg();
+                        break;
+                    case 'road':
+                        showRoadDlg();
+                        break;
+                    case 'police':
+                        showPoliceDlg();
+                        break;
+                    case 'mark':
+                        showMarkDlg();
+                        break;
+                    case 'situation':
+                        if ($("#PlanWrap").length <= 0) {
+                            showPlanDlg();
+                        } else {
+                            $("#PlanWrap").remove();
+                        }
+                        break;
+                    case 'user':
+                        showUserDlg();
+                        break;
+                        defalut:break;
+                }
+            };
+        }
+
+        function add(id, name, longitude, latitude, height, text, image, color, parent, description, size) {
+            viewer.entities.add({
+                id: id,
+                name: name,
+                position: Cesium.Cartesian3.fromDegrees(longitude, latitude, height),
+                label: {
+                    text: text,
+                    font: "16px Microsoft YaHei",
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    fillColor: Cesium.Color.fromCssColorString(
+                        "#ffffff"
+                    ).withAlpha(1),
+                    outlineWidth: 3,
+                    horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                    pixelOffset: new Cesium.Cartesian2(15, -2), //偏移量
+                    disableDepthTestDistance: 1000000000
+                },
+                billboard: {
+                    image: image,
+                    width: size,
+                    height: size,
+                    color: color,
+                    disableDepthTestDistance: 1000000000,
+                    heightReference: Cesium.HeightReference.NONE,
+                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM
+                },
+                parent: parent,
+                description: description
+            });
+        }
+
+        function cancel() {
+            var thehandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+            thehandler.setInputAction(function (movement) {
+                var pick = viewer.scene.pick(movement.position);
+                if (Cesium.defined(pick) && typeof (pick.id) !== 'undefined') {
+                    if ((pick.id.parent.id === 'caseMark' && usertype !== 1) || (pick.id.parent.id === 'policeMark' && usertype === 1)) {
+                        layer.open({
+                            type: 1,
+                            title: '',
+                            area: '300px',
+                            content: '<h4 style="text-align:center;margin-top:20px">是否删除？</h4>',
+                            btn: '确认',
+                            yes: function (index, layero) {
+                                var request = {id: pick.id.id};
+                                if (pick.id.parent.id === 'policeMark') {
+//                                        Connector({
+//                                            url: "/ps/delete",
+//                                            params: request,
+//                                            success: function (json) {
+//
+//                                            }
+//                                        });
+                                } else {
+//                                        Connector({
+//                                            url: "/mark/delete",
+//                                            params: request,
+//                                            success: function (json) {
+//
+//                                            }
+//                                        });
+                                    var theindex = indexOf(casenumbers, pick.id.id);
+                                    casenumbers.splice(theindex, 1);
+                                }
+                                viewer.entities.removeById(pick.id.id);
+                                layer.close(index);
+                            }
+                        });
+                    }
+                }
+            }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+        }
+
+        function addCasePoint(json) {
+            var uid = json.uid;
+            casenumbers.push(uid);
+            var position = json.position;
+            var longitude = position.x;
+            var latitude = position.y;
+            var height = position.z;
+            var level = json.level.toString();
+            var drone = json.drone;
+            var desc = json.desc;
+            var textDrone = drone ? '派出' : '不派出';
+            var leveltext;
+            var color;
+            switch (level) {
+                case '0':
+                    color = Cesium.Color.fromCssColorString("#ffffff").withAlpha(1);
+                    leveltext = '一般事件';
+                    break;
+                case '1':
+                    color = Cesium.Color.fromCssColorString("#FFB6C1").withAlpha(1)
+                    leveltext = '较大事件';
+                    break;
+                case '2':
+                    color = Cesium.Color.fromCssColorString("#FF1493").withAlpha(1)
+                    leveltext = '重大事件';
+                    break;
+                case '3':
+                    color = Cesium.Color.fromCssColorString("#FF0000").withAlpha(1)
+                    leveltext = '特别重大事件';
+                    break;
+                    defalut:break;
+            }
+            var description = '<table class="cesium-infoBox-defaultTable cesium-infoBox-defaultTable-lighter"><tbody>' +
+                '<tr><th>' + "经度" + '</th><td>' + longitude + '</td></tr>' +
+                '<tr><th>' + "纬度" + '</th><td>' + latitude + '</td></tr>' +
+                '<tr><th>' + "高度" + '</th><td>' + height + '</td></tr>' +
+                '<tr><th>' + "事件级别" + '</th><td>' + leveltext + '</td></tr>' +
+                '<tr><th>' + "无人机" + '</th><td>' + textDrone + '</td></tr>' +
+                '<tr><th>' + "描述" + '</th><td>' + desc + '</td></tr>' +
+                '</tbody></table>';
+            var image = "Cesium/Plugins/assets/dingwei.png";
+            add(uid, '案情', longitude, latitude, height, '', image, color, caseMark, description, 32);
+        }
+
+        function addPolicePoint(json) {
+            var policeID = json.id;
+            var name = json.name;
+            var position = json.position;
+            var longitude = position.x;
+            var latitude = position.y;
+            var height = position.z;
+            var drones = json.drones;
+            var description = '<table class="cesium-infoBox-defaultTable cesium-infoBox-defaultTable-lighter"><tbody>' +
+                '<tr><th>' + "ID" + '</th><td>' + policeID + '</td></tr>' +
+                '<tr><th>' + "经度" + '</th><td>' + longitude + '</td></tr>' +
+                '<tr><th>' + "纬度" + '</th><td>' + latitude + '</td></tr>' +
+                '<tr><th>' + "无人机" + '</th><td>' + drones + '</td></tr>' +
+                '</tbody></table>';
+            var image = "Cesium/Plugins/assets/jianzhu1.png";
+            var color = Cesium.Color.fromCssColorString(
+                "#0000FF"
+            ).withAlpha(1);
+            add(policeID, name, longitude, latitude, height, name, image, color, policeMark, description, 40);
+        }
+
+        function showCityModelDlg() {
+            var container = $(".cesium-viewer");
+            var layerDialogWrap = $(`<div id="layerDialogWrap1"></div>`);
+            var layersTab = $(`
+                <ul class="layersDialogTab">
+                    <li>在线资源</li> 
+                </ul>
+               `);
+            var Content = $(`
+                <div class="content">
+                    <dl>
+                      <dt>url</dt>
+                      <dd>
+                        <input id="url" value="https://online.dataearth.airlook.com/data/auth/view/1099890221485260802/"/>
+                      </dd>
+                    </dl>
+                    <dl>
+                      <dt>dstoken</dt>
+                      <dd>
+                        <input id="dstoken" value="5b1906c32d6f63c0ad5becc13237c20e"/>
+                      </dd>
+                    </dl>     
+                </div>
+               `);
+            //                    <button data-bind="click:ShowDlg.bind($data,'city')">确认添加</button>
+            layerDialogWrap.append(layersTab);
+            layerDialogWrap.append(Content);
+            container.append(layerDialogWrap);
+
+            layer.open({
+                type: 1,
+                title: '导入城市实景模型',
+                area: "471px",
+                content: $("#layerDialogWrap1"),
+                btn: '确认',
+                yes: function (index, layero) {
+                    var url = $("#url").val();
+                    var dstoken = $("#dstoken").val();
+                    var tileset = new Cesium.DE3DTileset({
+                        url: url,
+                        viewer: viewer,
+                        dstoken: dstoken,
+                        shadows: Cesium.ShadowMode.ENABLED
+                    });
+                    viewer.tilesetLayers.add(tileset);
+                    viewer.flyTo(tileset);
+                    $("#layerDialogWrap1").remove();
+                    layer.close(index);
+                }
+            })
+        }
+
+        function showRoadDlg() {
+            var container = $(".cesium-viewer");
+            var layerDialogWrap = $(`<div id="layerDialogWrap2"></div>`);
+            var layersTab = $(`
+                <ul class="layersDialogTab">
+                    <li>导入GeoJson数据</li> 
+                </ul>
+               `);
+            var Content = $(`
+                <div class="content">
+                    <dl>
+                      <dt>道路文件</dt>
+                      <dd>
+                           <button id="Road">选择</button>
+                          <div class="layui-upload-list">
+                               <p id="Text1"></p>
+                           </div>
+                      </dd>
+                    </dl> 
+                      <dl>
+                      <dt>点文件</dt>
+                      <dd>
+                           <button id="Point">选择</button>
+                           <div class="layui-upload-list">
+                              <p id="Text2"></p>
+                           </div>
+                      </dd>
+                    </dl> 
+                </div>
+               `);
+            layerDialogWrap.append(layersTab);
+            layerDialogWrap.append(Content);
+            container.append(layerDialogWrap);
+
+            layer.open({
+                type: 1,
+                title: '导入城市道路数据',
+                area: "471px",
+                content: $("#layerDialogWrap2"),
+                btn: '确认',
+                yes: function (index, layero) {
+                    var options = {
+                        camera: viewer.scene.camera,
+                        canvas: viewer.scene.canvas
+                    };
+                    var promise = Cesium.GeoJsonDataSource.load('data/newline.geojson', options);
+                    promise.then(function (dataSource) {
+                        viewer.dataSources.add(dataSource);
+                    })
+                    $("#layerDialogWrap2").remove();
+                    layer.close(index);
+                }
+            })
+
+            layui.use('upload', function () {
+                var upload = layui.upload;
+                var RoadFile = upload.render({
+                    elem: '#Road'
+//                        , url: '/upload/' //上传的url
+                    , accept: 'file'
+                    , exts: 'geojson'
+                    , done: function (res) {
+                        console.log(res)
+//                            if (json.code == 0) {
+//                                return layer.msg('上传失败-------');
+//                            }
+//                            if (json.code > 0) {
+//                                return layer.msg('上传成功--------');
+//                            }
+                    }
+                    , error: function () {
+                        var Text = $('#Text1');
+                        Text.html('<span style="color: #FF5722;">上传失败</span> <a class="layui-btn layui-btn-xs demo-reload">重试</a>');
+                        Text.find('.demo-reload').on('click', function () {
+                            RoadFile.upload();
+                        });
+                    }
+                });
+
+                var PointFile = upload.render({
+                    elem: '#Point'
+//                        , url: '/upload/' //上传的url
+                    , accept: 'file'
+                    , exts: 'geojson'
+                    , done: function (res) {
+                        console.log(res)
+//                            if (json.code == 0) {
+//                                return layer.msg('上传失败-------');
+//                            }
+//                            if (json.code > 0) {
+//                                return layer.msg('上传成功--------');
+//                            }
+                    }
+                    , error: function () {
+                        var Text = $('#Text2');
+                        Text.html('<span style="color: #FF5722;">上传失败</span> <a class="layui-btn layui-btn-xs demo-reload">重试</a>');
+                        Text.find('.demo-reload').on('click', function () {
+                            PointFile.upload();
+                        });
+                    }
+                });
+
+            })
+        }
+
+        function showPoliceDlg() {
+            var container = $(".cesium-viewer");
+            var layerDialogWrap = $(`<div id="layerDialogWrap3"></div>`);
+            var layersTab = $(`
+                <ul class="layersDialogTab">
+                    <li>警局初始化</li> 
+                </ul>
+               `);
+            var tabcontent = $(`
+                <div class="tab-content">
+                </div>
+               `);
+            var AddContent = $(`
+                <div class="content">
+                    <dl>
+                      <dt>名称</dt>
+                      <dd>
+                        <input id="name" placeholder="请输入警局名称"/>
+                      </dd>
+                    </dl>
+                    <dl>
+                      <dt>ID</dt>
+                      <dd>
+                        <input id="policeID" placeholder="请输入警局ID" />
+                      </dd>
+                    </dl>
+                    <dl>
+                      <dt>经度</dt>
+                      <dd>
+                        <input id="longitude" placeholder="请输入经度"/>
+                      </dd>
+                    </dl>  
+                    <dl>
+                      <dt>纬度</dt>
+                      <dd>
+                        <input id="latitude" placeholder="请输入纬度"/>
+                      </dd>
+                    </dl>
+                    <dl>
+                      <dt>警员</dt>
+                      <dd id ="table">
+                        <table border="1" class="table">
+                            <tr>
+                            <td>ID</td>
+                            <td>名称</td>
+                            </tr>
+                            <tr>
+                            <td>1</td>
+                            <td><input name="policename"/></td>
+                            </tr>
+                        </table>
+                      </dd>
+                    </dl>
+                    <dl>
+                      <dt>无人机</dt>
+                      <dd>
+                        <input id="drones" placeholder="请输入无人机数目" />
+                      </dd>
+                    </dl>
+                </div>
+               `);
+            tabcontent.append(AddContent);
+            layerDialogWrap.append(layersTab);
+            layerDialogWrap.append(tabcontent);
+            container.append(layerDialogWrap);
+
+            var scene = viewer.scene;
+            var longitudeString = null;
+            var latitudeString = null;
+            var height = 32;
+            var handler = new Cesium.ScreenSpaceEventHandler(scene.canvas);
+
+            handler.setInputAction(function (e) {
+                var position = viewer.scene.pickGlobe(e.position);
+                if (position) {
+                    var i = Cesium.Cartographic.fromCartesian(position);
+                    longitudeString = Cesium.Math.toDegrees(i.longitude);
+                    latitudeString = Cesium.Math.toDegrees(i.latitude);
+                    height = 0 < i.height ? i.height : 0;
+                    $("#longitude").val(longitudeString);
+                    $("#latitude").val(latitudeString);
+                }
+            }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+            appendRow(1);
+
+
+            layer.open({
+                    type: 1,
+                    title: '警局初始化',
+                    area: "471px",
+                    content: $("#layerDialogWrap3"),
+                    shade: 0,
+                    btn: '确认',
+                    yes: function (index, layero) {
+                        var name = $('#name').val();
+                        var policeID = $('#policeID').val();
+                        var longitude = parseFloat($('#longitude').val());
+                        var latitude = parseFloat($('#latitude').val());
+                        var drones = parseInt($('#drones').val());
+                        var position = {x: longitude, y: latitude, z: height};
+                        var policename = $('input[name="policename"]');
+                        var crew = [];
+                        for (var i = 0; i < policename.length - 1; i++) {
+                            var j = i + 1;
+                            var thename = policename[i].value;
+                            var thecrew = {id: policeID + "_" + j, name: thename};
+                            crew.push(thecrew);
+                        }
+                        var request = {
+                            id: policeID,
+                            name: name,
+                            position: position,
+                            crew: crew,
+                            drones: drones
+                        };
+//                        Connector({
+//                            url: "/init/ps",
+//                            params: request,
+//                            success: function (json) {
+//                            }
+//                        });
+                        addPolicePoint(request);
+                        $("#layerDialogWrap3").remove();
+                        layer.close(index);
+                    }
+                }
+            )
+        }
+
+
+        function appendRow(i) {
+            var j = i + 1;
+            var policenameLast = $('input[name="policename"]:last');
+            var table = $(".table");
+            var flag = true;
+            policenameLast.focus(function () {
+                if (flag) {
+                    var more = "<tr><td>" + j + "</td><td><input name='policename'/></td></tr>";
+                    table.append(more);
+                    flag = false;
+                    appendRow(i + 1);
+                } else {
+                    return;
+                }
+            });
+        }
+
+        function showMarkDlg() {
+
+            var container = $(".cesium-viewer");
+            var layerDialogWrap = $(`<div id="layerDialogWrap4"></div>`);
+            var layersTab = $(`
+                <ul class="layersDialogTab">
+                    <li>案情标记</li> 
+                </ul>
+               `);
+            var tabcontent = $(`
+                <div class="tab-content">
+                </div>
+               `);
+            var AddContent = $(`
+                <div class="content">
+                    <dl>
+                      <dt>经度</dt>
+                      <dd>
+                        <input id="longitude1" placeholder="请输入经度"/>
+                      </dd>
+                    </dl>  
+                    <dl>
+                      <dt>纬度</dt>
+                      <dd>
+                        <input id="latitude1" placeholder="请输入纬度"/>
+                      </dd>
+                    </dl>
+                    <dl>
+                      <dt>高度</dt>
+                      <dd>
+                        <input id="height1" placeholder="请输入高度"/>
+                      </dd>
+                    </dl>
+                    <dl>
+                      <dt>事件级别</dt>
+                      <dd>
+                            <select id="casetype">
+                            <option value="0">一般事件</option>
+                            <option value="1">较大事件</option>
+                            <option value="2">重大事件</option>
+                            <option value="3">特别重大事件</option>
+                        </select>
+                      </dd>
+                    </dl>
+                      <dl>
+                      <dt>无人机</dt>
+                      <dd>
+                        <input type="radio" name="drone" value="true" style="width:10%"/>派出
+                        <input type="radio" name="drone" value="false"style="width:10%"/>不派出
+                      </dd>
+                    </dl>
+                    <dl>
+                      <dt>描述</dt>
+                      <dd>
+                        <textarea id="desc" type="text" placeholder="请输入事件描述" style="width:100%"/>
+                      </dd>
+                    </dl>
+                </div>
+               `);
+            tabcontent.append(AddContent);
+            layerDialogWrap.append(layersTab);
+            layerDialogWrap.append(tabcontent);
+            container.append(layerDialogWrap);
+
+
+            var scene = viewer.scene;
+            var longitudeString = null;
+            var latitudeString = null;
+            var heightString = null;
+            var handler = new Cesium.ScreenSpaceEventHandler(scene.canvas);
+
+            handler.setInputAction(function (e) {
+                var position = viewer.scene.pickGlobe(e.position);
+                if (position) {
+                    var i = Cesium.Cartographic.fromCartesian(position);
+                    longitudeString = Cesium.Math.toDegrees(i.longitude);
+                    latitudeString = Cesium.Math.toDegrees(i.latitude);
+                    heightString = 0 < i.height ? i.height : 0;
+                    $("#longitude1").val(longitudeString);
+                    $("#latitude1").val(latitudeString);
+                    $("#height1").val(heightString);
+                }
+            }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+            layer.open({
+                    type: 1,
+                    title: '进行案情标记',
+                    area: "471px",
+                    content: $("#layerDialogWrap4"),
+                    shade: 0,
+                    btn: '确认',
+                    yes: function (index, layero) {
+                        var longitude = parseFloat($('#longitude1').val());
+                        var latitude = parseFloat($('#latitude1').val());
+                        var height = parseFloat($('#height1').val());
+                        var position = {x: longitude, y: latitude, z: height};
+                        var level = parseInt($("#casetype option:selected").val());
+                        var drone = eval($('input[name="drone"]:checked').val());
+                        var desc = $('#desc').val();
+                        var request = {
+                            position: position,
+                            level: level,
+                            drone: drone,
+                            desc: desc
+                        };
+                        var uid = 1;
+//                        Connector({
+//                            url: "/data/mark",
+//                            params: request,
+//                            success: function (json) {
+//                               
+//                               addCasePoint(json);
+//                            } 
+//                        });
+                        var newrequest = {
+                            uid: uid,
+                            position: position,
+                            level: level,
+                            drone: drone,
+                            desc: desc
+                        };
+                        addCasePoint(newrequest);
+                        $("#layerDialogWrap4").remove();
+                        layer.close(index);
+                    }
+                }
+            )
+
+        }
+
+        function showPlanDlg() {
+            var PlanWrap = $('<div class="PlanWrap" id="PlanWrap"></div>');
+            var buttons = [
+                {'id': 'checkRoute', 'value': '查看警力调度路线'},
+                {'id': 'DroneAnalysis', 'value': '无人机可视域分析'},
+            ];
+            $('.cesium-viewer').append(PlanWrap);
+            buttons.forEach(function (item) {
+                PlanWrap.append(`<button id="${item.id}" class="button">${item.value}</button>`);
+            });
+
+            $('#checkRoute').on('click', function () {
+                if (typeof (routeEntity) === 'undefined') {
+                    var request = {};
+                    //                Connector({
+//                    url: "/init/ps",
+//                    params: request,
+//                    success: function (json) {
+//                    }
+//                });
+                    route = [-65, 35, -125, 35];
+                    routeEntity = viewer.entities.add({
+                        id: 'routeEntity',
+                        name: '调度路线',
+                        polyline: {
+                            positions: Cesium.Cartesian3.fromDegreesArray(route),
+                            width: 5,
+                            material: Cesium.Color.RED.withAlpha(0.5),
+                            clampToGround: true
+                        },
+                        parent: routeMark
+                    });
+                    updateRouteVar = setInterval(updateRoute, 6000);
+                } else {
+                    clearInterval(updateRouteVar);
+                    viewer.entities.removeById('routeEntity');
+                    routeEntity = undefined;
+                }
+            })
+
+
+            $('#DroneAnalysis').on('click', function () {
+                Shed3D();
+            })
+        }
+
+        function Shed3D() {
+            var plane = viewer.entities.add({
+                id: 'plane',
+                name: '无人机',
+                model: {
+                    uri: 'Cesium/Plugins/assets/drone.glb',
+                    minimumPixelSize: 128,
+                    maximumScale: 20000
+                },
+                position: Cesium.Cartesian3.fromDegrees(0, 0, 0)
+            });
+            var container = $(".cesium-viewer");
+            var layerDialogWrap = $(`<div id="layerDialogWrap5"></div>`);
+            var layersTab = $(`
+                                <ul class="layersDialogTab">
+                                    <li>可视域分析</li> 
+                                </ul>
+                        `);
+            var tabcontent = $(`
+                                <div class="tab-content">
+                                </div>
+                        `);
+            var AddContent = $(`
+                            <div class="content">
+                                <dl>
+                                  <dt>方向角</dt>
+                                  <dd>
+                                    <input type="number" id="direction" min="0" max="360" step="1.0" value="0.0" data-bind="value: direction, valueUpdate: 'input'" placeholder="请输入经度"/>
+                                  </dd>
+                                </dl>  
+                                <dl>
+                                  <dt>俯仰角</dt>
+                                  <dd>
+                                    <input type="number" id="pitch" min="-90" max="90" step="1.0" value="0.0"  data-bind="value: pitch, valueUpdate: 'input'" placeholder="请输入纬度"/>
+                                  </dd>
+                                </dl>
+                                <dl>
+                                  <dt>距离</dt>
+                                  <dd>
+                                    <input  type="number" id="distance" min="-90" max="90" step="1.0" value="0.0"  data-bind="value: distance, valueUpdate: 'input'" placeholder="请输入高度"/>
+                                  </dd>
+                                </dl>
+                                <dl>
+                                  <dt>水平视角</dt>
+                                  <dd>
+                                     <input type="number" id="horizonalFov" min="1" max="120" step="1" value="1" data-bind="value: horizontalFov, valueUpdate: 'input'" placeholder="请输入高度"/>
+                                  </dd>
+                                </dl>
+                                  <dl>
+                                  <dt>垂直视角</dt>
+                                  <dd>
+                                    <input  type="number" id="verticalFov" min="1" max="90" step="1.0" value="1" data-bind="value: verticalFov, valueUpdate: 'input'" placeholder="请输入高度"/>
+                                  </dd>
+                                </dl>
+                                <dl>
+                                  <dt>可见域</dt>
+                                  <dd>
+                                    <input id="colorPicker1" data-bind="value: visibleAreaColor, valueUpdate: 'input'" placeholder="请输入高度"/>
+                                  </dd>
+                                </dl>
+                                <dl>
+                                  <dt>不可见域</dt>
+                                  <dd>
+                                    <input id="colorPicker2" data-bind="value: invisibleAreaColor, valueUpdate: 'input'" placeholder="请输入高度"/>
+                                  </dd>
+                                </dl>
+                            </div>
+                           `);
+            tabcontent.append(AddContent);
+            layerDialogWrap.append(layersTab);
+            layerDialogWrap.append(tabcontent);
+            container.append(layerDialogWrap);
+            var viewshed3D = undefined;
+            $("#colorPicker1").spectrum({
+                color: "rgb(0, 255, 0, 0.6)",
+                showPalette: true,
+                showAlpha: true,
+                palette: palette
+            });
+            $('#colorPicker2').spectrum({
+                color: "rgb(255, 0, 0, 0.6)",
+                showPalette: true,
+                showAlpha: true,
+                palette: palette
+            });
+            var viewModel = {
+                direction: 0.0,
+                pitch: 0.0,
+                distance: 0.0,
+                verticalFov: 60.0,
+                horizontalFov: 90.0,
+                visibleAreaColor: "rgb(0, 255, 0, 0.6)",
+                invisibleAreaColor: "rgb(255, 0, 0, 0.6)"
+            };
+            Cesium.knockout.track(viewModel);
+            var Shed3DAs = document.getElementById('layerDialogWrap5');
+            Cesium.knockout.applyBindings(viewModel, Shed3DAs);
+            Cesium.knockout.getObservable(viewModel, 'direction').subscribe(
+                function (newValue) {
+                    if (Cesium.defined(viewshed3D)) {
+                        viewshed3D.direction = parseFloat(newValue);
+                    }
+                }
+            );
+            Cesium.knockout.getObservable(viewModel, 'pitch').subscribe(
+                function (newValue) {
+                    if (Cesium.defined(viewshed3D)) {
+                        viewshed3D.pitch = parseFloat(newValue);
+                    }
+                }
+            );
+            Cesium.knockout.getObservable(viewModel, 'distance').subscribe(
+                function (newValue) {
+                    if (Cesium.defined(viewshed3D)) {
+                        viewshed3D.distance = parseFloat(newValue);
+                    }
+                }
+            );
+            Cesium.knockout.getObservable(viewModel, 'verticalFov').subscribe(
+                function (newValue) {
+                    if (Cesium.defined(viewshed3D)) {
+                        viewshed3D.verticalFov = parseFloat(newValue);
+                    }
+                }
+            );
+            Cesium.knockout.getObservable(viewModel, 'horizontalFov').subscribe(
+                function (newValue) {
+                    if (Cesium.defined(viewshed3D)) {
+                        viewshed3D.horizontalFov = parseFloat(newValue);
+                    }
+                }
+            );
+            Cesium.knockout.getObservable(viewModel, 'visibleAreaColor').subscribe(
+                function (newValue) {
+                    if (Cesium.defined(viewshed3D)) {
+                        var color = Cesium.Color.fromCssColorString(newValue);
+                        viewshed3D.visibleAreaColor = color;
+                    }
+                }
+            );
+            Cesium.knockout.getObservable(viewModel, 'invisibleAreaColor').subscribe(
+                function (newValue) {
+                    if (Cesium.defined(viewshed3D)) {
+                        var color = Cesium.Color.fromCssColorString(newValue);
+                        viewshed3D.hiddenAreaColor = color;
+                    }
+                }
+            );
+
+            var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+            var start = false;
+            handler.setInputAction(function (movement) {
+                var position = viewer.scene.pickGlobe(movement.position);
+                if (position) {
+                    var i = Cesium.Cartographic.fromCartesian(position);
+                    var longitude = Cesium.Math.toDegrees(i.longitude);
+                    var latitude = Cesium.Math.toDegrees(i.latitude);
+                    var height = 0 < i.height ? i.height : 0;
+                    plane.position = Cesium.Cartesian3.fromDegrees(longitude, latitude, height);
+                    if (!Cesium.defined(viewshed3D)) {
+                        viewshed3D = new Cesium.DEViewshed3D(viewer);
+                        viewer.scene.primitives.add(viewshed3D);
+                    }
+                    viewshed3D.distance = 0;
+                    var color = Cesium.Color.fromCssColorString($("#colorPicker1")[0].value);
+                    viewshed3D.visibleAreaColor = color;
+                    color = Cesium.Color.fromCssColorString($("#colorPicker2")[0].value);
+                    viewshed3D.hiddenAreaColor = color;
+                    var positionWC = viewer.scene.pickPosition(movement.position);
+                    viewshed3D.viewerPosition = positionWC;
+                    start = true;
+                }
+            }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+            handler.setInputAction(function (e) {
+                if (start) {
+                    var targetPosition = viewer.scene.pickPosition(e.endPosition);
+                    viewshed3D.setPoseByTargetPoint(targetPosition);
+                }
+            }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+            handler.setInputAction(function (e) {
+                if (Cesium.defined(viewshed3D) && start) {
+                    handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+                    viewModel.direction = viewshed3D.direction.toFixed(6);
+                    viewModel.pitch = viewshed3D.pitch.toFixed(6);
+                    viewModel.distance = viewshed3D.distance.toFixed(6);
+                    viewModel.horizontalFov = viewshed3D.horizontalFov.toFixed(6);
+                    viewModel.verticalFov = viewshed3D.verticalFov.toFixed(6);
+                }
+            }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+//
+            layer.open({
+                type: 1,
+                title: '无人机三维分析',
+                area: "471px",
+                content: $("#layerDialogWrap5"),
+                shade: 0,
+                btn: '确认',
+                yes: function (index, layero) {
+                    viewer.entities.removeById('plane');
+                    viewshed3D.destroy();
+                    $("#layerDialogWrap5").remove();
+                    layer.close(index);
+                },
+                cancel: function (index, layero) {
+                    viewer.entities.removeById('plane');
+                    viewshed3D.destroy();
+                }
+            })
+        }
+
+
+        function showUserDlg() {
+            var container = $(".cesium-viewer");
+            var layerDialogWrap = $(`<div id="layerDialogWrap6"></div>`);
+            var layersTab = $(`
+                <ul class="nav nav-tabs layersDialogTab">
+                    <li role="presentation"><a href="#add" role="tab" data-toggle="tab">添加账户</a></li> 
+                    <li role="presentation"><a href="#delete" role="tab" data-toggle="tab">删除账户</a></li>
+                </ul>
+               `);
+            var tabcontent = $(`
+                <div class="tab-content">
+                </div>
+               `);
+
+            var AddContent = $(`
+                <div id="add" class="tab-pane active content" role="tabpanel" >
+                    <dl>
+                      <dt>用户名</dt>
+                      <dd>
+                        <input id="user" placeholder="请输入用户名"/>
+                      </dd>
+                    </dl>
+                    <dl>
+                      <dt>用户类型</dt>
+                      <dd>
+                        <select id="usertype">
+                            <option value="0">接线员</option>
+                            <option value="2">警员</option>
+                        </select>
+                      </dd>
+                    </dl>  
+                    <dl>
+                      <dt>密码</dt>
+                      <dd>
+                        <input id="password" type="password" placeholder="请输入密码"/>
+                      </dd>
+                    </dl>
+                </div>
+               `);
+            var DeleteContent = $(`
+                <div id="delete" class="tab-pane active content" role="tabpanel" >
+                    <dl>
+                      <dt>用户名</dt>
+                      <dd>
+                        <input id="deleteuser" placeholder="请输入需要删除的用户名"/>
+                      </dd>
+                    </dl>   
+                </div>
+               `);
+            tabcontent.append(AddContent);
+            tabcontent.append(DeleteContent);
+            layerDialogWrap.append(layersTab);
+            layerDialogWrap.append(tabcontent);
+            container.append(layerDialogWrap);
+            $('#layerDialogWrap6 a:first').tab('show');
+            layer.open({
+                    type: 1,
+                    title: '账户编辑',
+                    area: "471px",
+                    content: $("#layerDialogWrap6"),
+                    cancel: function (index, layero) {
+                        $("#layerDialogWrap6").remove();
+                    },
+                    btn: '确认',
+                    yes: function (index, layero) {
+                        var activeTab = $('ul.layersDialogTab li.active a').attr("href");
+                        if (activeTab == "#add") {
+                            var username = $("#user").val();
+                            var usertype = parseInt($("#usertype option:selected").val());
+                            var password = $("#password").val();
+                            if (username == "" || password == "") {
+                                alert("未输入完整")
+                            } else {
+                                var SHA256pw = sha256_digest(username + password);
+                                var request = {
+                                    username: username,
+                                    usertype: usertype,
+                                    password: SHA256pw
+                                };
+                                console.log(request);
+                            }
+//                        Connector({
+//                            url: "/user/add",
+//                            params: request,
+//                            success: function (json) {
+//                            }
+//                        });
+                            $("#user").val("");
+                            $("#password").val("");
+                        } else {
+                            var username = $("#deleteuser").val();
+                            if (username == "") {
+                                alert("未输入需要删除的用户名");
+                            } else {
+                                var request = {
+                                    username: username,
+                                };
+                                console.log(request);
+                            }
+//                        Connector({
+//                            url: "/user/delete",
+//                            params: request,
+//                            success: function (json) {
+//                            }
+//                        });
+                            $("#deleteuser").val("");
+                        }
+
+                    }
+                }
+            )
+
+        }
+
+    </script>
+</head>
+<body>
+<div id="toolbar">
+    <div id="menu">
+        <ul class="nav nav-pills" data-bind="foreach:{data:thefunctions,as:'fc'}">
+            <li role="presentation" data-bind="click:ShowDlg.bind($data,fc.functiontype),visible:fc.ableornot">
+                <a href="#">
+                    <span data-bind="attr:{class:fc.marker,title:fc.tooltip}"></span>
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div id="cesiumContainer">
+
+</div>
+</body>
+</html>

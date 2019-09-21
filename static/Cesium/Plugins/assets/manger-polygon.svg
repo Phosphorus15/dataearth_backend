@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="30px" height="30px" viewBox="0 0 30 30" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.2 (67145) - http://www.bohemiancoding.com/sketch -->
+    <title>面标注-大</title>
+    <desc>Created with Sketch.</desc>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="画板" transform="translate(-1310.000000, -162.000000)" fill="#FFFFFF">
+            <g id="面标注" transform="translate(1310.000000, 162.000000)">
+                <path d="M22.2,27 L7.8,27 C7.8,24.3490332 5.6509668,22.2 3,22.2 L3,7.8 C5.6509668,7.8 7.8,5.6509668 7.8,3 L22.2,3 C22.2,5.6509668 24.3490332,7.8 27,7.8 L27,22.2 C24.3490332,22.2 22.2,24.3490332 22.2,27 Z" id="合并形状"></path>
+                <circle id="椭圆形" cx="3.5" cy="3.5" r="2.5"></circle>
+                <circle id="椭圆形-copy-7" cx="26.5" cy="3.5" r="2.5"></circle>
+                <circle id="椭圆形-copy-8" cx="26.5" cy="26.5" r="2.5"></circle>
+                <circle id="椭圆形-copy-9" cx="3.5" cy="26.5" r="2.5"></circle>
+            </g>
+        </g>
+    </g>
+</svg>
