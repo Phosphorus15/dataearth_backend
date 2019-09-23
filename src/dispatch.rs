@@ -63,40 +63,20 @@ pub fn construct_topology(points: &Vec<RawPoint>) -> RoadGraph {
     }).collect::<Vec<_>>();
     for pos in 0..bound.len() {
         let info = &points[pos];
-        for _i in 0..2 {
-            let pos = &mut bound[pos];
-            if let Some(p) = points.iter().zip(0..points.len())
-                .filter(|(p, id)| *id != pos.id && p.r1 == info.r1 && !pos.link_to.contains(id))
-                .map(|(p, id)| (p.location.compute_distance(&pos.location), id))
-                .min_by(|(d1, _), (d2, _)| d1.partial_cmp(d2).unwrap()) {
-                pos.link_to.push(p.1);
-                let id = pos.id;
-                bound[p.1].link_to.push(id);
-            }
+        let pos = &mut bound[pos];
+        let vec1 = points.iter().zip(0..points.len())
+            .filter(|(p, id)| *id != pos.id && (p.r1 == info.r1 || p.r2 == info.r1) && !pos.link_to.contains(id))
+            .map(|(p, id)| (p.location.compute_distance(&pos.location), id)).collect::<Vec<_>>();
+        for p in vec1.iter() {
+            pos.link_to.push(p.1);
         }
         if info.r2 >= 0 {
             // try-connect policy - connect two more times
-            for _i in 0..2 {
-                let pos = &mut bound[pos];
-                if let Some(p) = points.iter().zip(0..points.len())
-                    .filter(|(p, id)| *id != pos.id && (p.r1 == info.r2 || p.r2 == info.r1) && !pos.link_to.contains(id))
-                    .map(|(p, id)| (p.location.compute_distance(&pos.location), id))
-                    .min_by(|(d1, _), (d2, _)| d1.partial_cmp(d2).unwrap()) {
-                    pos.link_to.push(p.1);
-                    let id = pos.id;
-                    bound[p.1].link_to.push(id);
-                }
-            }
-            for _i in 0..2 {
-                let pos = &mut bound[pos];
-                if let Some(p) = points.iter().zip(0..points.len())
-                    .filter(|(p, id)| *id != pos.id && p.r2 == info.r2 && !pos.link_to.contains(id))
-                    .map(|(p, id)| (p.location.compute_distance(&pos.location), id))
-                    .min_by(|(d1, _), (d2, _)| d1.partial_cmp(d2).unwrap()) {
-                    pos.link_to.push(p.1);
-                    let id = pos.id;
-                    bound[p.1].link_to.push(id);
-                }
+            let vec2 = points.iter().zip(0..points.len())
+                .filter(|(p, id)| *id != pos.id && (p.r1 == info.r2 || p.r2 == info.r1 || p.r2 == info.r2) && !pos.link_to.contains(id))
+                .map(|(p, id)| (p.location.compute_distance(&pos.location), id)).collect::<Vec<_>>();
+            for p in vec2.iter() {
+                pos.link_to.push(p.1);
             }
         }
     }
@@ -177,14 +157,14 @@ pub fn offline_bellman_ford(graph: &RoadGraph) -> Vec<Vec<Path>> {
                 visited[cur.id] = true
             }
             let dis = nearest[edge.0] + edge.2;
-            if nearest[edge.1] > dis {
+            if nearest[edge.1] >= dis {
                 nearest[edge.1] = dis;
                 path[edge.1] = path[edge.0].clone();
                 path[edge.1].push((edge.0, edge.1));
-            }
-            for sub in cur.link_to.iter() {
-                if *sub != edge.0 {
-                    queue.push((cur.id, *sub, cur.compute_distance(&graph[*sub])));
+                for sub in cur.link_to.iter() {
+                    if *sub != edge.0 {
+                        queue.push((cur.id, *sub, cur.compute_distance(&graph[*sub])));
+                    }
                 }
             }
         }
@@ -253,7 +233,7 @@ pub struct Mission {
 
 pub struct Dispatcher(RoadGraph, Vec<Vec<Path>>);
 
-const DISPATCH_FACTOR: f64 = 10f64;
+const DISPATCH_FACTOR: f64 = 3f64;
 
 impl Dispatcher {
     // This should constantly be locked by a mutex

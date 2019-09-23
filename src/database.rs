@@ -165,7 +165,7 @@ impl DatabaseAccess {
     }
 
     pub fn remove_routes(&self, belong: usize) -> Result<u64> {
-        self.conn.execute("DELETE FROM dispatch_routes WHERE belong=$1", &[&(belong as i64)])
+        self.conn.execute("DELETE FROM dispatch_routes WHERE belong=$1", &[&(belong as i32)])
     }
 }
 
