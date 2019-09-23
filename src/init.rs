@@ -3,9 +3,9 @@ use std::sync::{Arc, Mutex};
 use crate::database::{DatabaseAccess, UnifiedData};
 use actix_web::{HttpRequest, Responder, HttpResponse, web, error, Error};
 use actix_multipart::{Multipart, Field, MultipartError};
-use futures::{Stream, Future, IntoFuture};
+use futures::{Stream, Future};
 use std::fs;
-use futures::future::{Either, err, Err};
+use futures::future::{Either, err};
 use std::io::Write;
 
 pub fn init_token(database: Data<Arc<Mutex<DatabaseAccess>>>, request: HttpRequest, data: actix_web::web::Json<UnifiedData>) -> impl Responder {

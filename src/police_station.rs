@@ -2,7 +2,7 @@ use crate::database::{DatabaseAccess, PoliceStation, Position};
 use std::sync::{Mutex, Arc};
 use actix_web::web::{Data, Json};
 use serde::{Deserialize, Serialize};
-use actix_web::{HttpRequest, Responder, HttpResponse, HttpMessage};
+use actix_web::{HttpRequest, Responder, HttpResponse};
 
 #[derive(Deserialize)]
 pub struct DeletePoliceStationInfo {
@@ -42,7 +42,7 @@ pub fn delete_police_station(database: Data<Arc<Mutex<DatabaseAccess>>>, login: 
 
 pub fn list_police_station(database: Data<Arc<Mutex<DatabaseAccess>>>, request: HttpRequest) -> impl Responder {
     let info = crate::login::get_login(database.clone(), request);
-    if let Some(i) = info {
+    if let Some(_i) = info {
         return HttpResponse::Ok().content_type("application/json").body(
             serde_json::to_string(&PoliceStations{
                 inner: database.lock().unwrap().find_police_station()

@@ -1,7 +1,5 @@
 use std::sync::{Arc, Mutex};
 use binary_heap_plus::BinaryHeap;
-use compare::Compare;
-use std::cmp::Ordering;
 use json::JsonValue;
 use std::sync::atomic::AtomicUsize;
 use crate::database::Position;
@@ -23,28 +21,13 @@ impl From<Position> for Coordinates {
     }
 }
 
-pub struct Comparator {}
-
 type Edge = (usize, usize, f64);
-
-impl Compare<Edge, Edge> for Comparator {
-    fn compare(&self, l: &(usize, usize, f64), r: &(usize, usize, f64)) -> Ordering {
-        return l.2.partial_cmp(&r.2).unwrap();
-    }
-}
 
 #[derive(Debug)]
 pub struct RoadIntersection {
     id: usize,
     location: Coordinates,
     link_to: Vec<usize>,
-}
-
-#[derive(Debug)]
-pub struct GraphPoint {
-    location: Coordinates,
-    id: usize,
-    paths: Vec<Path>, // Path to specific point
 }
 
 #[derive(Debug)]
@@ -94,7 +77,7 @@ pub fn construct_topology(points: &Vec<RawPoint>) -> RoadGraph {
         if info.r2 >= 0 {
             // try-connect policy - connect two more times
             for _i in 0..2 {
-                let mut pos = &mut bound[pos];
+                let pos = &mut bound[pos];
                 if let Some(p) = points.iter().zip(0..points.len())
                     .filter(|(p, id)| *id != pos.id && p.r2 == info.r2 && !pos.link_to.contains(id))
                     .map(|(p, id)| (p.location.compute_distance(&pos.location), id))

@@ -1,5 +1,5 @@
 use crate::dispatch::*;
-use actix::{Actor, SyncContext, Handler, Message};
+use actix::{Actor, Handler, Message};
 use crate::database::{DatabaseAccess, DispatchedRoutes};
 use std::sync::{Mutex, Arc};
 use std::sync::atomic::AtomicUsize;

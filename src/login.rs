@@ -5,9 +5,6 @@ use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 use crate::database::DatabaseAccess;
 use actix_web::cookie::CookieBuilder;
-use actix::Addr;
-use crate::dispatcher::DispatcherService;
-use crate::dispatch::{Workload, Coordinates};
 
 #[derive(Deserialize)]
 pub struct LoginInfo {

@@ -2,7 +2,7 @@ use crate::database::{DatabaseAccess, Position, OperatorMark};
 use std::sync::{Mutex, Arc};
 use actix_web::web::{Data, Json};
 use serde::{Deserialize, Serialize};
-use actix_web::{HttpRequest, Responder, HttpResponse, HttpMessage};
+use actix_web::{HttpRequest, Responder, HttpResponse};
 use std::time::UNIX_EPOCH;
 use actix::Addr;
 use crate::dispatcher::DispatcherService;
@@ -38,9 +38,9 @@ pub fn delete_mark(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<Delet
     HttpResponse::Ok().content_type("application/json").body("{\"result\": \"failed\"}")
 }
 
-pub fn list_routes(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<DeleteMarkInfo>, request: HttpRequest) -> impl Responder {
+pub fn list_routes(database: Data<Arc<Mutex<DatabaseAccess>>>, request: HttpRequest) -> impl Responder {
     let info = crate::login::get_login(database.clone(), request);
-    if let Some(i) = info {
+    if let Some(_i) = info {
         let routes = database.lock().unwrap().get_routes().into_iter()
             .map(|v| v.route.into_iter().map(|p| vec![p.0, p.1]).flatten().collect::<Vec<_>>())
             .collect::<Vec<_>>();

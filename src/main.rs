@@ -1,4 +1,4 @@
-use actix_web::{HttpServer, App, Responder, HttpMessage};
+use actix_web::{HttpServer, App, Responder};
 use actix_web::web::*;
 
 mod database;
@@ -17,7 +17,7 @@ use std::sync::{Arc, Mutex};
 use crate::database::DatabaseAccess;
 use sha2::{Sha256, Digest};
 use crate::dispatcher::DispatcherService;
-use actix::{System, SyncArbiter, Arbiter, Actor};
+use actix::Actor;
 use crate::dispatch::{Dispatcher, parse_road_data, construct_topology, offline_bellman_ford};
 use std::io::{BufReader, Read};
 
@@ -25,7 +25,7 @@ include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 
 fn init_check(database: Data<Arc<Mutex<DatabaseAccess>>>, request: HttpRequest) -> impl Responder {
     let info = crate::login::get_login(database.clone(), request);
-    if let Some(i) = info {
+    if let Some(_i) = info {
         return HttpResponse::Ok().content_type("application/json").body(format!("{{\"result\": {} }}", database.lock().unwrap().try_init()));
     }
     HttpResponse::Ok().content_type("application/json").body("{\"result\": false}")
@@ -104,5 +104,5 @@ fn main() {
         .start();
     println!("Initialized : {}", init);
     println!("System is now running ...");
-    sys.run();
+    sys.run().expect("Unable to start actix system");
 }
