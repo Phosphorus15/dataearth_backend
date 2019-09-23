@@ -36,10 +36,10 @@ pub fn add_user(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<AddUserI
                 user_type: login.usertype,
                 passwd: login.password.clone(),
             });
-            return HttpResponse::Ok().content_type("application/json").body("{result: \"success\"}");
+            return HttpResponse::Ok().content_type("application/json").body("{\"result\": \"success\"}");
         }
     }
-    HttpResponse::Ok().content_type("application/json").body("{result: \"failed\"}")
+    HttpResponse::Ok().content_type("application/json").body("{\"result\": \"failed\"}")
 }
 
 pub fn logout(database: Data<Arc<Mutex<DatabaseAccess>>>, request: HttpRequest) -> impl Responder {

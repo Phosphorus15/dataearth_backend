@@ -211,7 +211,6 @@
     </style>
     <script>
         $(document).ready(function () {
-            initialType();
             ko.applyBindings(theviewModel, document.getElementById('toolbar'));
             initialCheck();
         });
@@ -264,17 +263,21 @@
 
         function initialType() {
             var request = {};
-            Connector({
+            $.ajax({
                 url: "/user/type",
-                params: request,
-                success: function (json) {
+                data: "{}",
+                method:"POST",
+                dataType: "json",
+                contentType: "application/json",
+                async: false,
+                success:function(json){
                     usertype = json.type;
                     if (usertype === -1) {
                         alert("请先登录 ！");
                         window.location = "/";
                     }
                 },
-                failure: function () {
+                error:function(data){
                     alert("请先登录 ！");
                     window.location = "/";
                 }
@@ -415,6 +418,7 @@
         }
 
         var theviewModel = function () {
+            initialType();
             alert("欢迎登入警务系统");
             this.thefunctions = ko.observableArray([
                 {
@@ -1418,14 +1422,14 @@
                                 var request = {
                                     username: username,
                                 };
+                                Connector({
+                                    url: "/user/delete",
+                                    params: request,
+                                    success: function (json) {
+                                    }
+                                });
                                 console.log(request);
                             }
-//                        Connector({
-//                            url: "/user/delete",
-//                            params: request,
-//                            success: function (json) {
-//                            }
-//                        });
                             $("#deleteuser").val("");
                         }
 

@@ -15,7 +15,7 @@ Connector = function(opts){
         data:JSON.stringify(opts.params),
         method:"POST",
         dataType: "json",
-        contentType: "text/json",
+        contentType: "application/json",
         success:function(data){
             opts.success(data);
         },
