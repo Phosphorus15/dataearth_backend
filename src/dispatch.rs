@@ -79,6 +79,17 @@ pub fn construct_topology(points: &Vec<RawPoint>) -> RoadGraph {
             for _i in 0..2 {
                 let pos = &mut bound[pos];
                 if let Some(p) = points.iter().zip(0..points.len())
+                    .filter(|(p, id)| *id != pos.id && (p.r1 == info.r2 || p.r2 == info.r1) && !pos.link_to.contains(id))
+                    .map(|(p, id)| (p.location.compute_distance(&pos.location), id))
+                    .min_by(|(d1, _), (d2, _)| d1.partial_cmp(d2).unwrap()) {
+                    pos.link_to.push(p.1);
+                    let id = pos.id;
+                    bound[p.1].link_to.push(id);
+                }
+            }
+            for _i in 0..2 {
+                let pos = &mut bound[pos];
+                if let Some(p) = points.iter().zip(0..points.len())
                     .filter(|(p, id)| *id != pos.id && p.r2 == info.r2 && !pos.link_to.contains(id))
                     .map(|(p, id)| (p.location.compute_distance(&pos.location), id))
                     .min_by(|(d1, _), (d2, _)| d1.partial_cmp(d2).unwrap()) {
@@ -136,7 +147,7 @@ fn test_road_parse() {
 pub fn offline_bellman_ford(graph: &RoadGraph) -> Vec<Vec<Path>> {
     graph.iter().map(|pos| {
         let mut queue = BinaryHeap::with_capacity_by(graph.len(), |u: &Edge, v: &Edge| {
-            u.2.partial_cmp(&v.2).unwrap()
+            v.2.partial_cmp(&u.2).unwrap()
         });
         let mut visited: Vec<bool> = Vec::with_capacity(graph.len());
         let mut nearest: Vec<f64> = Vec::with_capacity(graph.len());
@@ -160,16 +171,16 @@ pub fn offline_bellman_ford(graph: &RoadGraph) -> Vec<Vec<Path>> {
         while !queue.is_empty() {
             let edge = &queue.pop().unwrap();
             let cur = &graph[edge.1];
+            if visited[cur.id] {
+                continue;
+            } else {
+                visited[cur.id] = true
+            }
             let dis = nearest[edge.0] + edge.2;
             if nearest[edge.1] > dis {
                 nearest[edge.1] = dis;
                 path[edge.1] = path[edge.0].clone();
                 path[edge.1].push((edge.0, edge.1));
-            }
-            if visited[cur.id] {
-                continue;
-            } else {
-                visited[cur.id] = true
             }
             for sub in cur.link_to.iter() {
                 if *sub != edge.0 {
@@ -265,21 +276,21 @@ impl Dispatcher {
         }
     }
 
-    fn next_sat(workload: &Workload, ongoing: &Vec<Dispatch>, resources: &Vec<Drone>) -> (usize, Option<Result<Dispatch, Drone>>) {
-        let dispatch = ongoing.iter().filter(|v| v.severity < workload.severity && v.power > 0)
+    fn next_sat<'x>(workload: &Workload, ongoing: &'x mut Vec<Dispatch>, resources: &'x mut Vec<Drone>) -> (usize, Option<Result<&'x mut Dispatch, &'x mut Drone>>) {
+        let dispatch = ongoing.iter_mut().filter(|v| v.severity < workload.severity && v.power > 0)
             .map(|v| (v.location.compute_distance(&workload.location), v))
             .min_by(|v1, v2| v1.0.partial_cmp(&v2.0).unwrap());
-        let drone = resources.iter().filter(|v| v.power > 0)
+        let drone = resources.iter_mut().filter(|v| v.power > 0)
             .map(|v| (v.location.compute_distance(&workload.location), v))
             .min_by(|v1, v2| v1.0.partial_cmp(&v2.0).unwrap());
         match (dispatch, drone) {
-            (Some(v), None) => (v.1.power, Some(Ok(v.1.clone()))),
-            (None, Some(v)) => (v.1.power, Some(Err(v.1.clone()))),
+            (Some(v), None) => (v.1.power, Some(Ok(v.1))),
+            (None, Some(v)) => (v.1.power, Some(Err(v.1))),
             (Some(v1), Some(v2)) =>
                 if Self::assess_dispatch(v1.0, v2.0, (workload.severity - v1.1.severity) as i32) {
-                    (v1.1.power, Some(Ok(v1.1.clone())))
+                    (v1.1.power, Some(Ok(v1.1)))
                 } else {
-                    (v2.1.power, Some(Err(v2.1.clone())))
+                    (v2.1.power, Some(Err(v2.1)))
                 }
             (None, None) =>
                 (0, None)
@@ -306,41 +317,45 @@ impl Dispatcher {
         }
     }
 
-    pub fn online_dispatch_round(&self, mut workload: Workload, ongoing: &Vec<Dispatch>, resources: &Vec<Drone>, global_id: &AtomicUsize) -> (Vec<Mission>, Workload) {
-        let mut solution = Self::next_sat(&workload, &ongoing, &resources);
+    pub fn online_dispatch_round(&self, mut workload: Workload, ongoing: &mut Vec<Dispatch>, resources: &mut Vec<Drone>, global_id: &AtomicUsize) -> (Vec<Mission>, Workload) {
+        let mut solution = Self::next_sat(&workload, ongoing, resources);
         let mut missions = vec![];
         while workload.consumption > 0 && solution.0 > 0 {
-            if let Some(Ok(sol)) = &mut solution.1 {
-                let power = workload.consumption.min(sol.power);
-                missions.push(Mission {
-                    id: global_id.fetch_add(1, std::sync::atomic::Ordering::SeqCst),
-                    power,
-                    severity: workload.severity,
-                    from: sol.location,
-                    to: workload.location,
-                    path_given: self.generate_route(sol.location, workload.location),
-                    predecessor: sol.id,
-                    source: sol.source.clone(),
-                });
-                workload.consumption -= power;
-                sol.power -= power;
+            if let Some(sol_to) = solution.1 {
+                match sol_to {
+                    Ok(sol) => {
+                        let power = workload.consumption.min(sol.power);
+                        missions.push(Mission {
+                            id: global_id.fetch_add(1, std::sync::atomic::Ordering::SeqCst),
+                            power,
+                            severity: workload.severity,
+                            from: sol.location,
+                            to: workload.location,
+                            path_given: self.generate_route(sol.location, workload.location),
+                            predecessor: sol.id,
+                            source: sol.source.clone(),
+                        });
+                        workload.consumption -= power;
+                        sol.power -= power;
+                    }
+                    Err(sol) => {
+                        let power = workload.consumption.min(sol.power);
+                        missions.push(Mission {
+                            id: global_id.fetch_add(1, std::sync::atomic::Ordering::SeqCst),
+                            power,
+                            severity: workload.severity,
+                            from: sol.location,
+                            to: workload.location,
+                            path_given: self.generate_route(sol.location, workload.location),
+                            predecessor: 0,
+                            source: sol.uid.clone(),
+                        });
+                        workload.consumption -= power;
+                        sol.power -= power;
+                    }
+                }
             }
-            if let Some(Err(sol)) = &mut solution.1 {
-                let power = workload.consumption.min(sol.power);
-                missions.push(Mission {
-                    id: global_id.fetch_add(1, std::sync::atomic::Ordering::SeqCst),
-                    power,
-                    severity: workload.severity,
-                    from: sol.location,
-                    to: workload.location,
-                    path_given: self.generate_route(sol.location, workload.location),
-                    predecessor: 0,
-                    source: sol.uid.clone(),
-                });
-                workload.consumption -= power;
-                sol.power -= power;
-            }
-            solution = Self::next_sat(&workload, &ongoing, &resources);
+            solution = Self::next_sat(&workload, ongoing, resources);
         }
         (missions, workload)
     }

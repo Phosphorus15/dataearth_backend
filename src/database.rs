@@ -95,7 +95,8 @@ impl DatabaseAccess {
                     crew            VARCHAR[],
                     drone           INT
                   )", &[]).unwrap();
-        self.conn.execute("CREATE TABLE IF NOT EXISTS telephone_operator_data (
+        self.conn.execute("DROP TABLE IF EXISTS telephone_operator_data", &[]).unwrap();
+        self.conn.execute("CREATE TABLE telephone_operator_data (
                     id              SERIAL PRIMARY KEY,
                     uid             DECIMAL,
                     positionX       DOUBLE PRECISION,
@@ -106,7 +107,8 @@ impl DatabaseAccess {
                     level           INT,
                     description     VARCHAR
                   )", &[]).unwrap();
-        self.conn.execute("CREATE TABLE IF NOT EXISTS dispatch_routes (
+        self.conn.execute("DROP TABLE IF EXISTS dispatch_routes", &[]).unwrap();
+        self.conn.execute("CREATE TABLE dispatch_routes (
                     id              SERIAL PRIMARY KEY,
                     belong          INT,
                     xs              DOUBLE PRECISION[],
@@ -148,7 +150,7 @@ impl DatabaseAccess {
     pub fn add_route(&self, route: DispatchedRoutes) {
         let iters: (Vec<_>, Vec<_>) = route.route.iter().cloned().unzip();
         self.conn.execute("INSERT INTO dispatch_routes (belong, xs, ys) VALUES ($1, $2, $3)",
-                          &[&(route.belong as i64), &iters.0, &&iters.1]).unwrap();
+                          &[&(route.belong as i32), &iters.0, &&iters.1]).unwrap();
     }
 
     pub fn get_routes(&self) -> Vec<DispatchedRoutes> {
@@ -156,7 +158,7 @@ impl DatabaseAccess {
             .query("SELECT * FROM dispatch_routes", &[]).unwrap();
         rows.iter().map(|row| {
             DispatchedRoutes {
-                belong: row.get::<usize, i64>(1) as usize,
+                belong: row.get::<usize, i32>(1) as usize,
                 route: row.get::<usize, Vec<f64>>(2).into_iter().zip(row.get::<usize, Vec<f64>>(3)).collect::<Vec<_>>(),
             }
         }).collect()

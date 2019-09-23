@@ -60,7 +60,7 @@ impl Handler<Workload> for DispatcherService {
             return Ok(());
         }
         let dispatched =
-            dispatcher.online_dispatch_round(msg.clone(), &self.3, &self.2, &self.4);
+            dispatcher.online_dispatch_round(msg.clone(), &mut self.3, &mut self.2, &self.4);
         if dispatched.1.consumption < msg.consumption { // or else there's no need to lock the database
             let database = self.0.lock().unwrap(); // lock for now
             for mission in dispatched.0.iter() {
