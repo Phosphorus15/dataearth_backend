@@ -41,7 +41,7 @@ pub fn get_login_type(database: Data<Arc<Mutex<DatabaseAccess>>>, request: HttpR
     HttpResponse::Ok().content_type("application/json").body("{\"type\": -1}")
 }
 
-pub fn user_login(database: Data<Arc<Mutex<DatabaseAccess>>>, dispatcher: Data<Addr<DispatcherService>>, login: Json<LoginInfo>) -> impl Responder {
+pub fn user_login(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<LoginInfo>) -> impl Responder {
     let db = database.lock().unwrap();
     let user = db.find_user(login.name.clone());
     match user {

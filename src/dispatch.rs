@@ -4,12 +4,23 @@ use compare::Compare;
 use std::cmp::Ordering;
 use json::JsonValue;
 use std::sync::atomic::AtomicUsize;
+use crate::database::Position;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Coordinates {
     pub x: f64,
     pub y: f64,
     pub h: f64,
+}
+
+impl From<Position> for Coordinates {
+    fn from(p: Position) -> Self {
+        Self {
+            x: p.x,
+            y: p.y,
+            h: p.z,
+        }
+    }
 }
 
 pub struct Comparator {}
@@ -189,36 +200,61 @@ pub fn offline_bellman_ford(graph: &RoadGraph) -> Vec<Vec<Path>> {
 
 #[derive(Clone)]
 pub struct Drone {
-    power: usize,
-    location: Coordinates,
+    pub power: usize,
+    pub location: Coordinates,
+    pub uid: String,
 }
 
 #[derive(Clone)]
 pub struct Workload {
+    pub is_remove: bool,
     pub id: usize,
     pub severity: usize,
     pub consumption: usize,
     pub location: Coordinates,
+    pub assign_id: usize,
     pub drone: bool,
+}
+
+impl Workload {
+    pub fn delete(assign: usize) -> Self {
+        Self {
+            is_remove: true,
+            id: assign,
+            severity: 0,
+            consumption: 0,
+            location: Coordinates {
+                x: 0.0,
+                y: 0.0,
+                h: 0.0,
+            },
+            assign_id: assign,
+            drone: false,
+        }
+    }
 }
 
 #[derive(Clone)]
 pub struct Dispatch {
-    id: usize,
-    power: usize,
-    severity: usize,
-    location: Coordinates,
+    pub id: usize,
+    pub power: usize,
+    pub severity: usize,
+    pub location: Coordinates,
+    pub assign: usize,
+    pub source: String,
+    pub to_id: usize,
 }
 
 #[derive(Clone)]
 pub struct Mission {
-    id: usize,
-    power: usize,
-    severity: usize,
-    from: Coordinates,
-    to: Coordinates,
-    path_given: Vec<(f64, f64)>,
-    predecessor: usize,
+    pub id: usize,
+    pub power: usize,
+    pub severity: usize,
+    pub from: Coordinates,
+    pub to: Coordinates,
+    pub path_given: Vec<(f64, f64)>,
+    pub predecessor: usize,
+    pub source: String,
 }
 
 pub struct Dispatcher(RoadGraph, Vec<Vec<Path>>);
@@ -226,7 +262,6 @@ pub struct Dispatcher(RoadGraph, Vec<Vec<Path>>);
 const DISPATCH_FACTOR: f64 = 10f64;
 
 impl Dispatcher {
-
     // This should constantly be locked by a mutex
     pub fn new(graph: RoadGraph, paths: Vec<Vec<Path>>) -> Arc<Mutex<Self>> {
         Arc::new(
@@ -302,6 +337,7 @@ impl Dispatcher {
                     to: workload.location,
                     path_given: self.generate_route(sol.location, workload.location),
                     predecessor: sol.id,
+                    source: sol.source.clone(),
                 });
                 workload.consumption -= power;
                 sol.power -= power;
@@ -316,6 +352,7 @@ impl Dispatcher {
                     to: workload.location,
                     path_given: self.generate_route(sol.location, workload.location),
                     predecessor: 0,
+                    source: sol.uid.clone(),
                 });
                 workload.consumption -= power;
                 sol.power -= power;

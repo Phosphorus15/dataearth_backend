@@ -4,6 +4,9 @@ use actix_web::web::{Data, Json};
 use serde::{Deserialize, Serialize};
 use actix_web::{HttpRequest, Responder, HttpResponse, HttpMessage};
 use std::time::UNIX_EPOCH;
+use actix::Addr;
+use crate::dispatcher::DispatcherService;
+use crate::dispatch::{Workload, Coordinates};
 
 #[derive(Deserialize)]
 pub struct DeleteMarkInfo {
@@ -23,13 +26,27 @@ pub struct Marks {
     inner: Vec<OperatorMark>
 }
 
-pub fn delete_mark(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<DeleteMarkInfo>, request: HttpRequest) -> impl Responder {
+pub fn delete_mark(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<DeleteMarkInfo>, dispatcher: Data<Addr<DispatcherService>>, request: HttpRequest) -> impl Responder {
     let info = crate::login::get_login(database.clone(), request);
     if let Some(i) = info {
         if i.user_type == 2 {
             database.lock().unwrap().delete_mark(login.uid.clone());
+            dispatcher.do_send(Workload::delete(login.uid as usize));
             return HttpResponse::Ok().content_type("application/json").body("{\"result\": \"success\"}");
         }
+    }
+    HttpResponse::Ok().content_type("application/json").body("{\"result\": \"failed\"}")
+}
+
+pub fn list_routes(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<DeleteMarkInfo>, request: HttpRequest) -> impl Responder {
+    let info = crate::login::get_login(database.clone(), request);
+    if let Some(i) = info {
+        let routes = database.lock().unwrap().get_routes().into_iter()
+            .map(|v| v.route.into_iter().map(|p| vec![p.0, p.1]).flatten().collect::<Vec<_>>())
+            .collect::<Vec<_>>();
+        return HttpResponse::Ok().content_type("application/json").body(
+            serde_json::to_string(&routes).unwrap()
+        );
     }
     HttpResponse::Ok().content_type("application/json").body("{\"result\": \"failed\"}")
 }
@@ -74,7 +91,7 @@ pub fn update_mark(database: Data<Arc<Mutex<DatabaseAccess>>>, request: HttpRequ
     HttpResponse::Ok().content_type("application/json").body("{\"result\": \"failed\"}")
 }
 
-pub fn add_mark(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<AddMarkInfo>, request: HttpRequest) -> impl Responder {
+pub fn add_mark(database: Data<Arc<Mutex<DatabaseAccess>>>, dispatcher: Data<Addr<DispatcherService>>, login: Json<AddMarkInfo>, request: HttpRequest) -> impl Responder {
     let info = crate::login::get_login(database.clone(), request);
     if let Some(i) = info {
         if i.user_type == 0 {
@@ -86,6 +103,15 @@ pub fn add_mark(database: Data<Arc<Mutex<DatabaseAccess>>>, login: Json<AddMarkI
                 drone: login.drone,
                 uid: std::time::SystemTime::now().duration_since(UNIX_EPOCH)
                     .unwrap().as_millis(),
+            });
+            dispatcher.do_send(Workload {
+                is_remove: false,
+                id: uid as usize,
+                assign_id: uid as usize,
+                severity: login.level as usize,
+                consumption: (login.level + 1) as usize,
+                location: Coordinates::from(login.position),
+                drone: login.drone,
             });
             return HttpResponse::Ok().content_type("application/json").body(
                 format!(

@@ -50,6 +50,12 @@ pub struct OperatorMark {
 }
 
 #[derive(Deserialize, Serialize, Clone)]
+pub struct DispatchedRoutes {
+    pub route: Vec<(f64, f64)>,
+    pub belong: usize,
+}
+
+#[derive(Deserialize, Serialize, Clone)]
 pub struct UnifiedData {
     #[serde(rename = "3durl")]
     _3durl: String,
@@ -102,6 +108,7 @@ impl DatabaseAccess {
                   )", &[]).unwrap();
         self.conn.execute("CREATE TABLE IF NOT EXISTS dispatch_routes (
                     id              SERIAL PRIMARY KEY,
+                    belong          INT,
                     xs              DOUBLE PRECISION[],
                     ys              DOUBLE PRECISION[]
                     )", &[]).unwrap();
@@ -138,6 +145,29 @@ impl DatabaseAccess {
 }
 
 impl DatabaseAccess {
+    pub fn add_route(&self, route: DispatchedRoutes) {
+        let iters: (Vec<_>, Vec<_>) = route.route.iter().cloned().unzip();
+        self.conn.execute("INSERT INTO dispatch_routes (belong, xs, xy) VALUES ($1, $2, $3)",
+                          &[&(route.belong as i64), &iters.0, &&iters.1]).unwrap();
+    }
+
+    pub fn get_routes(&self) -> Vec<DispatchedRoutes> {
+        let rows = self.conn
+            .query("SELECT * FROM dispatch_routes", &[]).unwrap();
+        rows.iter().map(|row| {
+            DispatchedRoutes {
+                belong: row.get::<usize, i64>(1) as usize,
+                route: row.get::<usize, Vec<f64>>(2).into_iter().zip(row.get::<usize, Vec<f64>>(3)).collect::<Vec<_>>(),
+            }
+        }).collect()
+    }
+
+    pub fn remove_routes(&self, belong: usize) -> Result<u64> {
+        self.conn.execute("DELETE FROM dispatch_routes WHERE belong=$1", &[&(belong as i64)])
+    }
+}
+
+impl DatabaseAccess {
     pub fn try_init(&self) -> bool {
         let rows = self.conn
             .query("SELECT * FROM init_data",
@@ -154,7 +184,7 @@ impl DatabaseAccess {
                 user_type: 1,
             })
         } else if rows.len() > 1 {
-            return true
+            return true;
         }
         false
     }
@@ -167,9 +197,9 @@ impl DatabaseAccess {
     }
 
     pub fn load_init(&self) -> UnifiedData {
-        let mut unified = UnifiedData{
+        let mut unified = UnifiedData {
             _3ddstoken: String::new(),
-            _3durl: String::new()
+            _3durl: String::new(),
         };
         let data = self.conn.query("SELECT * FROM init_data", &[]).unwrap();
         data.iter().for_each(|v|

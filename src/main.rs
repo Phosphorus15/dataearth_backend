@@ -17,8 +17,9 @@ use std::sync::{Arc, Mutex};
 use crate::database::DatabaseAccess;
 use sha2::{Sha256, Digest};
 use crate::dispatcher::DispatcherService;
-use actix::{System, SyncArbiter};
+use actix::{System, SyncArbiter, Arbiter, Actor};
 use crate::dispatch::{Dispatcher, parse_road_data, construct_topology, offline_bellman_ford};
+use std::io::{BufReader, Read};
 
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 
@@ -51,14 +52,23 @@ fn main() {
         "postgres://postgres:12345@localhost:5432"
     );
     database.init();
-    database.try_init();
-    let roadmap = parse_road_data(&include_str!("../graph_test.geojson").to_string()).unwrap();
-    let graph = construct_topology(&roadmap);
-    let optimized = offline_bellman_ford(&graph);
-    let dispatcher = Dispatcher::new(graph, optimized);
+    let mut init = database.try_init();
+    let file = std::fs::File::open("point_data.geojson");
+    let dispatcher = if file.is_ok() && init {
+        println!("Loading initial road map data...");
+        let mut string = String::new();
+        BufReader::new(file.unwrap()).read_to_string(&mut string).unwrap();
+        let roadmap = parse_road_data(&string).unwrap();
+        let graph = construct_topology(&roadmap);
+        let optimized = offline_bellman_ford(&graph);
+        Dispatcher::new(graph, optimized)
+    } else {
+        init = false;
+        Dispatcher::new(vec![], vec![])
+    };
     let arc = Arc::new(Mutex::new(database));
     let service_arc = arc.clone();
-    let service = SyncArbiter::start(1, move || DispatcherService::new(service_arc.clone(), dispatcher.clone()));
+    let service = DispatcherService::new(service_arc.clone(), dispatcher.clone(), init).start();
 
     let wrapped_db = Data::new(arc.clone());
     HttpServer::new(move || {
@@ -86,8 +96,13 @@ fn main() {
             .route("/data/get_ps", post().to(police_station::list_police_station))
             .route("/ps/delete", post().to(police_station::delete_police_station))
             .route("/data/mark/ping", post().to(operator_mark::update_mark))
+            .route("/upload/road", post().to_async(init::upload_road_data))
+            .route("/upload/point", post().to_async(init::upload_point_data))
+            .route("/route", post().to(operator_mark::list_routes))
     })
         .bind("127.0.0.1:80").unwrap()
         .start();
+    println!("Initialized : {}", init);
+    println!("System is now running ...");
     sys.run();
 }
