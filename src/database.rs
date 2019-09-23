@@ -147,7 +147,7 @@ impl DatabaseAccess {
 impl DatabaseAccess {
     pub fn add_route(&self, route: DispatchedRoutes) {
         let iters: (Vec<_>, Vec<_>) = route.route.iter().cloned().unzip();
-        self.conn.execute("INSERT INTO dispatch_routes (belong, xs, xy) VALUES ($1, $2, $3)",
+        self.conn.execute("INSERT INTO dispatch_routes (belong, xs, ys) VALUES ($1, $2, $3)",
                           &[&(route.belong as i64), &iters.0, &&iters.1]).unwrap();
     }
 
@@ -222,7 +222,7 @@ impl DatabaseAccess {
 impl DatabaseAccess {
     pub fn add_mark(&self, telephone_operator: OperatorMark) -> i32 {
         self.conn.execute(
-            "INSERT INTO telephone_operator_data (uid, positionX, positionY, positionZ, drone, height, level, desc) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) "
+            "INSERT INTO telephone_operator_data (uid, positionX, positionY, positionZ, drone, height, level, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) "
             , &[&Decimal::from_u128(telephone_operator.uid).unwrap(), &telephone_operator.position.x, &telephone_operator.position.y, &telephone_operator.position.z, &telephone_operator.drone,
                 &telephone_operator.height, &telephone_operator.level, &telephone_operator.desc]).unwrap();
         let rows = self.conn.query("SELECT id FROM telephone_operator_data WHERE uid = $1"

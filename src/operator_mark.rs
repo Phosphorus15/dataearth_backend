@@ -42,7 +42,7 @@ pub fn list_routes(database: Data<Arc<Mutex<DatabaseAccess>>>, request: HttpRequ
     let info = crate::login::get_login(database.clone(), request);
     if let Some(_i) = info {
         let routes = database.lock().unwrap().get_routes().into_iter()
-            .map(|v| v.route.into_iter().map(|p| vec![p.0, p.1]).flatten().collect::<Vec<_>>())
+            .map(|v| v.route.into_iter().map(|p| vec![p.0, p.1]).collect::<Vec<_>>())
             .collect::<Vec<_>>();
         return HttpResponse::Ok().content_type("application/json").body(
             serde_json::to_string(&routes).unwrap()

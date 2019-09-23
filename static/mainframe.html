@@ -266,18 +266,18 @@
             $.ajax({
                 url: "/user/type",
                 data: "{}",
-                method:"POST",
+                method: "POST",
                 dataType: "json",
                 contentType: "application/json",
                 async: false,
-                success:function(json){
+                success: function (json) {
                     usertype = json.type;
                     if (usertype === -1) {
                         alert("请先登录 ！");
                         window.location = "/";
                     }
                 },
-                error:function(data){
+                error: function (data) {
                     alert("请先登录 ！");
                     window.location = "/";
                 }
@@ -379,34 +379,42 @@
             });
         }
 
+        var thejson = [];
+
         function updateRoute() {
             var request = {};
-//                Connector({
-//                    url: "/route",
-//                    params: request,
-//                    success: function (json) {
-//                        var array = [];
-//                        for (var i = 0; i < json.length; i++) {
-//                            array.push(json[i]);
-//                        }
-//                        if (route === array) {
-//                        } else {
-//                            route = array;
-//                            routeEntity.polyline.positions = Cesium.Cartesian3.fromDegreesArray(array);
-//                        }
-//                    }
-//                });
-            var myDate = new Date;
-            var s = myDate.getSeconds();
-            var l1 = s - 65;
-            var l2 = s - 125;
-            var array = [l1, 35, l2, 35];
-            if (route === array) {
-            } else {
-                route = array;
-                routeEntity.polyline.positions = Cesium.Cartesian3.fromDegreesArray(array);
-            }
-
+            Connector({
+                url: "/route",
+                params: request,
+                success: function (json) {
+                    if (json !== thejson) {
+                        if (thejson !== []) {
+                            $.each(routeMark._children, function (i, obj) {
+                                viewer.entities.remove(obj);
+                            });
+                        }
+                        thejson = json;
+                        for (var i = 0; i < json.length; i++) {
+                            var thepolyline = json[i];
+                            var position = [];
+                            for (var j = 0; j < thepolyline.length; j++) {
+                                position.push(thepolyline[j][0]);
+                                position.push(thepolyline[j][1]);
+                            }
+                            viewer.entities.add({
+                                name: '调度路线',
+                                polyline: {
+                                    positions: Cesium.Cartesian3.fromDegreesArray(position),
+                                    width: 5,
+                                    material: Cesium.Color.olive.withAlpha(0.5),
+                                    clampToGround: true
+                                },
+                                parent: routeMark
+                            });
+                        }
+                    }
+                }
+            });
         }
 
         function indexOf(arr, value) {
@@ -751,12 +759,7 @@
                     , exts: 'geojson'
                     , done: function (res) {
                         console.log(res)
-//                            if (json.code == 0) {
-//                                return layer.msg('上传失败-------');
-//                            }
-//                            if (json.code > 0) {
-//                                return layer.msg('上传成功--------');
-//                            }
+                        return layer.msg('上传成功--------');
                     }
                     , error: function () {
                         var Text = $('#Text1');
@@ -774,12 +777,7 @@
                     , exts: 'geojson'
                     , done: function (res) {
                         console.log(res)
-//                            if (json.code == 0) {
-//                                return layer.msg('上传失败-------');
-//                            }
-//                            if (json.code > 0) {
-//                                return layer.msg('上传成功--------');
-//                            }
+                        return layer.msg('上传成功--------');
                     }
                     , error: function () {
                         var Text = $('#Text2');
@@ -1080,35 +1078,16 @@
             });
 
             $('#checkRoute').on('click', function () {
-                if (typeof (routeEntity) === 'undefined') {
-                    var request = {};
-                    //                Connector({
-//                    url: "/init/ps",
-//                    params: request,
-//                    success: function (json) {
-//                    }
-//                });
-                    route = [-65, 35, -125, 35];
-                    routeEntity = viewer.entities.add({
-                        id: 'routeEntity',
-                        name: '调度路线',
-                        polyline: {
-                            positions: Cesium.Cartesian3.fromDegreesArray(route),
-                            width: 5,
-                            material: Cesium.Color.RED.withAlpha(0.5),
-                            clampToGround: true
-                        },
-                        parent: routeMark
-                    });
+                if (routeMark._children.length === 0) {
                     updateRouteVar = setInterval(updateRoute, 6000);
                 } else {
                     clearInterval(updateRouteVar);
-                    viewer.entities.removeById('routeEntity');
-                    routeEntity = undefined;
+                    $.each(routeMark._children, function (i, obj) {
+                        viewer.entities.remove(obj);
+                    });
+                    json = [];
                 }
             })
-
-
             $('#DroneAnalysis').on('click', function () {
                 Shed3D();
             })

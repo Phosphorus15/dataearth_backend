@@ -46,11 +46,11 @@ pub fn logout(database: Data<Arc<Mutex<DatabaseAccess>>>, request: HttpRequest) 
     let cookie = request.cookie("sess");
     match cookie {
         None => {
-            HttpResponse::Ok().content_type("application/json").body("{result: \"failed\"}")
+            HttpResponse::Ok().content_type("application/json").body("{\"result\": \"failed\"}")
         }
         Some(token) => {
             database.lock().unwrap().logout(token.value().to_string());
-            return HttpResponse::Ok().content_type("application/json").body("{result: \"success\"}");
+            return HttpResponse::Ok().content_type("application/json").body("{\"result\": \"success\"}");
         }
     }
 }
