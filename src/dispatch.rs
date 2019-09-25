@@ -21,8 +21,6 @@ impl From<Position> for Coordinates {
     }
 }
 
-type Edge = (usize, usize, f64);
-
 #[derive(Debug)]
 pub struct RoadIntersection {
     id: usize,
@@ -66,7 +64,7 @@ pub fn construct_topology(points: &Vec<RawPoint>) -> RoadGraph {
         let pos = &mut bound[pos];
         let vec1 = points.iter().zip(0..points.len())
             .filter(|(p, id)| *id != pos.id && (p.r1 == info.r1 || p.r2 == info.r1) && !pos.link_to.contains(id))
-            .map(|(p, id)| (p.location.compute_distance(&pos.location), id)).collect::<Vec<_>>();
+            .collect::<Vec<_>>();
         for p in vec1.iter() {
             pos.link_to.push(p.1);
         }
@@ -74,7 +72,7 @@ pub fn construct_topology(points: &Vec<RawPoint>) -> RoadGraph {
             // try-connect policy - connect two more times
             let vec2 = points.iter().zip(0..points.len())
                 .filter(|(p, id)| *id != pos.id && (p.r1 == info.r2 || p.r2 == info.r1 || p.r2 == info.r2) && !pos.link_to.contains(id))
-                .map(|(p, id)| (p.location.compute_distance(&pos.location), id)).collect::<Vec<_>>();
+                .collect::<Vec<_>>();
             for p in vec2.iter() {
                 pos.link_to.push(p.1);
             }
@@ -117,17 +115,18 @@ pub fn parse_road_data(geojson: &String) -> Result<Vec<RawPoint>, ()> {
 
 #[test]
 fn test_road_parse() {
-    let roadmap = parse_road_data(&include_str!("../graph_test.geojson").to_string()).unwrap();
+    let roadmap = parse_road_data(&include_str!("../point_data.geojson").to_string()).unwrap();
     let graph = construct_topology(&roadmap);
     let optimized = offline_bellman_ford(&graph);
     // ensure that all data are properly mapped
-    assert!(optimized.iter().map(|v| v.iter().filter(|v1| v1.is_empty()).count()).sum::<usize>() <= optimized.len());
+    let blank = optimized.iter().map(|v| v.iter().filter(|v1| v1.is_empty()).count()).sum::<usize>();
+    assert!(dbg!(blank) <= optimized.len());
 }
 
 pub fn offline_bellman_ford(graph: &RoadGraph) -> Vec<Vec<Path>> {
     graph.iter().map(|pos| {
-        let mut queue = BinaryHeap::with_capacity_by(graph.len(), |u: &Edge, v: &Edge| {
-            v.2.partial_cmp(&u.2).unwrap()
+        let mut queue = BinaryHeap::with_capacity_by(graph.len(), |&(_, u): &(usize, f64), &(_, v): &(usize, f64)| {
+            v.partial_cmp(&u).unwrap()
         });
         let mut visited: Vec<bool> = Vec::with_capacity(graph.len());
         let mut nearest: Vec<f64> = Vec::with_capacity(graph.len());
@@ -142,28 +141,20 @@ pub fn offline_bellman_ford(graph: &RoadGraph) -> Vec<Vec<Path>> {
             }
         }
         visited[pos.id] = true;
-        for i in pos.link_to.iter() {
-            let cur = &graph[*i];
-            nearest[cur.id] = pos.compute_distance(cur);
-            path[cur.id].push((pos.id, cur.id));
-            queue.push((pos.id, *i, nearest[cur.id]));
-        }
+        queue.push((pos.id, 0.0));
         while !queue.is_empty() {
             let edge = &queue.pop().unwrap();
-            let cur = &graph[edge.1];
-            if visited[cur.id] {
-                continue;
-            } else {
-                visited[cur.id] = true
-            }
-            let dis = nearest[edge.0] + edge.2;
-            if nearest[edge.1] >= dis {
-                nearest[edge.1] = dis;
-                path[edge.1] = path[edge.0].clone();
-                path[edge.1].push((edge.0, edge.1));
-                for sub in cur.link_to.iter() {
-                    if *sub != edge.0 {
-                        queue.push((cur.id, *sub, cur.compute_distance(&graph[*sub])));
+            let cur = &graph[edge.0];
+            for to in cur.link_to.iter() {
+                let to = *to;
+                let dis = nearest[edge.0] + cur.compute_distance(&graph[to]);
+                if nearest[to] >= dis {
+                    nearest[to] = dis;
+                    path[to] = path[edge.0].clone();
+                    path[to].push((edge.0, to));
+                    if !visited[to] {
+                        visited[to] = true;
+                        queue.push((to, cur.compute_distance(&graph[to])))
                     }
                 }
             }
