@@ -20,6 +20,7 @@ use crate::dispatcher::DispatcherService;
 use actix::Actor;
 use crate::dispatch::{Dispatcher, parse_road_data, construct_topology, offline_bellman_ford};
 use std::io::{BufReader, Read};
+use std::process::exit;
 
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 
@@ -45,17 +46,28 @@ pub fn fast_sha256(data: &str) -> String {
     hex::encode(sha.result())
 }
 
+#[allow(unreachable_code)]
 fn main() {
+    println!("Welcome use police dispatch system v1.0");
+    println!("  Copyleft by Central South University");
+    println!("  Authors:");
+    println!("      Frontend: Siyang Wen, Dazhou Ping");
+    println!("      Backend: Xuanxiang Wang, Xiaoyong Tan");
+    println!("  Powered by DataEarth© Cesium® system");
     let sys = actix::System::new("actix-server");
     let database = database::DatabaseAccess::new(
         //include_str!("../database.auth")
         "postgres://postgres:12345@localhost:5432"
-    );
+    ).unwrap_or_else(|err| {
+        eprintln!("无法连接到Postgres数据库 : {}", err);
+        exit(1);
+        panic!()
+    });
     database.init();
     let mut init = database.try_init();
     let file = std::fs::File::open("point_data.geojson");
     let dispatcher = if file.is_ok() && init {
-        println!("Loading initial road map data...");
+        println!("加载空间拓扑数据中...");
         let mut string = String::new();
         BufReader::new(file.unwrap()).read_to_string(&mut string).unwrap();
         let roadmap = parse_road_data(&string).unwrap();
@@ -102,7 +114,10 @@ fn main() {
     })
         .bind("127.0.0.1:80").unwrap()
         .start();
-    println!("Initialized : {}", init);
-    println!("System is now running ...");
+    println!("初始化是否完成 : {}", init);
+    if !init {
+        println!("请初始化数据并重启系统来使其完全工作 ！")
+    }
+    println!("系统已启动 ...");
     sys.run().expect("Unable to start actix system");
 }

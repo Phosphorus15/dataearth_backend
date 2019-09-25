@@ -64,10 +64,12 @@ pub struct UnifiedData {
 }
 
 impl DatabaseAccess {
-    pub fn new(url: &'_ str) -> Self {
-        DatabaseAccess {
-            conn: Connection::connect(url, TlsMode::None).unwrap()
-        }
+    pub fn new(url: &'_ str) -> Result<Self> {
+        Connection::connect(url, TlsMode::None).map(|conn|
+            Self {
+                conn
+            }
+        )
     }
 }
 
@@ -327,7 +329,7 @@ impl DatabaseAccess {
 
 impl Default for DatabaseAccess {
     fn default() -> Self {
-        Self::new("postgres://postgres:12345@localhost:5432")
+        Self::new("postgres://postgres:12345@localhost:5432").unwrap()
     }
 }
 

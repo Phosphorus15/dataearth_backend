@@ -252,7 +252,7 @@ impl Dispatcher {
             false
         } else {
             // slide the edge
-            return ((dis2 - dis1) / dis1 * (sev * DISPATCH_FACTOR / 3f64 + 1f64) / DISPATCH_FACTOR).log2() > 0f64;
+            return ((dis2 - dis1) / dis1 * (sev * DISPATCH_FACTOR / 3f64 + 1f64)).log2() > 0f64;
         }
     }
 
