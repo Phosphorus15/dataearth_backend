@@ -115,7 +115,7 @@ pub fn parse_road_data(geojson: &String) -> Result<Vec<RawPoint>, ()> {
 
 #[test]
 fn test_road_parse() {
-    let roadmap = parse_road_data(&include_str!("../point_data.geojson").to_string()).unwrap();
+    let roadmap = parse_road_data(&include_str!("../graph_test.geojson").to_string()).unwrap();
     let graph = construct_topology(&roadmap);
     let optimized = offline_bellman_ford(&graph);
     // ensure that all data are properly mapped
