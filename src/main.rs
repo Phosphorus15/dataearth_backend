@@ -40,6 +40,16 @@ fn main_page(database: Data<Arc<Mutex<DatabaseAccess>>>, request: HttpRequest) -
     }
 }
 
+fn load_road() -> impl Responder {
+    if let Ok(file) = std::fs::File::open("road_data.geojson") {
+        let mut string = String::new();
+        BufReader::new(file).read_to_string(&mut string).unwrap();
+        HttpResponse::Ok().body(string)
+    } else {
+        HttpResponse::NotFound().finish()
+    }
+}
+
 pub fn fast_sha256(data: &str) -> String {
     let mut sha = Sha256::new();
     sha.input(data.as_bytes());
@@ -56,8 +66,7 @@ fn main() {
     println!("  Powered by DataEarth© Cesium® system");
     let sys = actix::System::new("actix-server");
     let database = database::DatabaseAccess::new(
-        //include_str!("../database.auth")
-        "postgres://postgres:12345@localhost:5432"
+        include_str!("../database.auth")
     ).unwrap_or_else(|err| {
         eprintln!("无法连接到Postgres数据库 : {}", err);
         exit(1);
@@ -111,6 +120,7 @@ fn main() {
             .route("/upload/road", post().to_async(init::upload_road_data))
             .route("/upload/point", post().to_async(init::upload_point_data))
             .route("/route", post().to(operator_mark::list_routes))
+            .route("/data/road.geojson", get().to(load_road))
     })
         .bind("127.0.0.1:80").unwrap()
         .start();

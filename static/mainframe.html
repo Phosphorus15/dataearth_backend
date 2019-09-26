@@ -297,6 +297,10 @@
                     initialPs();
                     initialMark();
                     setInterval(updateMark, 10000);
+                    var promise = Cesium.GeoJsonDataSource.load('/data/road.geojson', options);
+                    promise.then(function (dataSource) {
+                        viewer.dataSources.add(dataSource);
+                    });
                 },
                 failure: function () {
                     initialOrNot = false;
@@ -741,10 +745,10 @@
                         camera: viewer.scene.camera,
                         canvas: viewer.scene.canvas
                     };
-                    var promise = Cesium.GeoJsonDataSource.load('data/newline.geojson', options);
+                    var promise = Cesium.GeoJsonDataSource.load('/data/road.geojson', options);
                     promise.then(function (dataSource) {
                         viewer.dataSources.add(dataSource);
-                    })
+                    });
                     $("#layerDialogWrap2").remove();
                     layer.close(index);
                 }

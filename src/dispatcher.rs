@@ -41,6 +41,7 @@ impl Handler<Workload> for DispatcherService {
             return Err(());
         }
         let dispatcher = self.1.lock().unwrap();
+
         if msg.is_remove {
             let vec = &mut self.2;
             let database = self.0.lock().unwrap(); // lock for now
